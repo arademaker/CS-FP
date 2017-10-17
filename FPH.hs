@@ -23,6 +23,23 @@ gen n = gen (n - 1) ++ " and on"
 genS :: Int -> String
 genS n = gen n ++ "."
 
+-- c3e12
+minList' :: Ord a => [a] -> a
+minList' [x] = x
+minList' (x1:x2:xt) = minList ((min x1 x2):xt)
+
+minList :: Ord a => [a] -> a
+minList [x]  = x
+minList (x:xs) = min x (minList xs)
+----
+
+-- c3e13
+delete' :: Eq a => a -> [a] -> [a]
+delete' _ [] = []
+delete' y (x:xt)
+  | x /= y = x : (delete y xt)
+  | otherwise = xt -- delete y xt
+
 -- delete :: Eq a => a -> [a] -> [a]
 -- delete p [] = []
 -- delete p (x:xs) | (p == x) = xs
@@ -38,13 +55,9 @@ deleteAll p (x:xs) | (p == x) = deleteAll p xs
 
 deleteAll2 :: Eq a => a -> [a] -> [a]
 deleteAll2 p xs = filter (\ x -> x /= p) xs
+----
 
-
-minList :: Ord a => [a] -> a
-minList [x]  = x
-minList (x:xs) = min x (minList xs)
-
-
+-- c3e14
 -- duas formas alternativas, let nos permite reaproveitar
 -- processamento linear do minList
 
@@ -58,6 +71,7 @@ srt xs =
 srt1 :: Ord a => [a] -> [a]
 srt1 [] = []
 srt1 xs = (minList xs) : srt1 (delete (minList xs) xs)
+----
 
 -- sec 3.10
   
@@ -115,6 +129,7 @@ averageWordsLength :: String -> Rational
 averageWordsLength xs = 
   average (map length [filter (`notElem` "!;:?,.") w | w <- (words xs)])
 
+-- c3e17
 prefix :: Eq a => [a] -> [a] -> Bool
 prefix [] ys         = True
 prefix (x:xs) []     = False
@@ -126,9 +141,15 @@ sublist [] [] = True
 sublist xs [] = False
 sublist xs (y:ys) = prefix xs (y:ys) || sublist xs ys
 
--- sublist xs (y:ys) = prefix xs (y:ys) = True
---                   | sublist xs ys    = True
---                   | otherwise        = False
+sublist' :: Eq a => [a] -> [a] -> Bool
+sublist' [] [] = True
+sublist' _ [] = False
+sublist' xs ys@(_:yt)
+  | prefix xs ys = True
+  | sublist xs yt = True
+  | otherwise = False
+
+----
 
 nub1 :: Eq a => [a] -> [a]
 nub1 [] = []
@@ -263,9 +284,15 @@ fMatch attr value fs = map (match attr value) fs
    where match a v f@(F a' v') | a == a'  = F a' v
                                | otherwise = f
 
+-- c3e19
 appendSuffixY :: [Phoneme] -> [Phoneme] -> [Phoneme]
-
-
+appendSuffixY stem suffix = stem ++ (map (harmonize stemV) suffix)
+  where isVowel = (\c -> elem c yawelmaniVowels)
+        getVowel = head . filter isVowel -- only gets first vowel
+        stemV = getVowel stem
+        harmonize' stemVowel = (\c -> fMatch Round (fValue Round stemVowel) (fMatch Back (fValue Back stemVowel) c))
+        harmonize stemVowel = (\c -> if isVowel c && (fValue High stemVowel) == (fValue High c) then harmonize' stemVowel c else c)
+----
 
 main = putStrLn ( s ++ show s)
   where s = "main = putStrLn (s ++ show s) \n where s = "
