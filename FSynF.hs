@@ -243,15 +243,18 @@ varsInForm = varsInTerms . termsInForm
 ----
 
 -- c4e23
+boundVarsInForm' :: Formula Term -> [Variable]
+boundVarsInForm' (Neg f) = boundVarsInForm' f
+boundVarsInForm' (Impl f f') = boundVarsInForm' f ++ boundVarsInForm' f'
+boundVarsInForm' (Equi f f') = boundVarsInForm' f ++ boundVarsInForm' f'
+boundVarsInForm' (Conj fs) = concat $ map boundVarsInForm' fs
+boundVarsInForm' (Disj fs) = concat $ map boundVarsInForm' fs
+boundVarsInForm' (Forall v f) = v : boundVarsInForm' f
+boundVarsInForm' (Exists v f) = v : boundVarsInForm' f
+boundVarsInForm' _ = []
+
 boundVarsInForm :: Formula Term -> [Variable]
-boundVarsInForm (Neg f) = boundVarsInForm f
-boundVarsInForm (Impl f f') = boundVarsInForm f ++ boundVarsInForm f'
-boundVarsInForm (Equi f f') = boundVarsInForm f ++ boundVarsInForm f'
-boundVarsInForm (Conj fs) = concat $ map boundVarsInForm fs
-boundVarsInForm (Disj fs) = concat $ map boundVarsInForm fs
-boundVarsInForm (Forall v f) = boundVarsInForm f
-boundVarsInForm (Exists v f) = boundVarsInForm f
-boundVarsInForm _ = []
+boundVarsInForm f = intersect (boundVarsInForm' f) (varsInForm f)
 
 freeVarsInForm :: Formula Term -> [Variable]
 freeVarsInForm f = varsInForm f \\ boundVarsInForm f
