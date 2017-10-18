@@ -227,19 +227,19 @@ varsInTerms :: [Term] -> [Variable]
 varsInTerms = nub.concat.map varsInTerm
 
 -- c4e22
-termsInForm' :: Formula Term -> [Term]
-termsInForm' (Atom _ ts) = ts
-termsInForm' (Eq t t') = [t, t']
-termsInForm' (Neg f) = termsInForm' f
-termsInForm' (Impl f f') = termsInForm' f ++ termsInForm' f'
-termsInForm' (Equi f f') = termsInForm' f ++ termsInForm' f'
-termsInForm' (Conj fs) = concat $ map termsInForm' fs
-termsInForm' (Disj fs) = concat $ map termsInForm' fs
-termsInForm' (Forall v f) = termsInForm' f
-termsInForm' (Exists v f) = termsInForm' f
+termsInForm :: Formula Term -> [Term]
+termsInForm (Atom _ ts) = ts
+termsInForm (Eq t t') = [t, t']
+termsInForm (Neg f) = termsInForm f
+termsInForm (Impl f f') = termsInForm f ++ termsInForm f'
+termsInForm (Equi f f') = termsInForm f ++ termsInForm f'
+termsInForm (Conj fs) = concat $ map termsInForm fs
+termsInForm (Disj fs) = concat $ map termsInForm fs
+termsInForm (Forall v f) = termsInForm f
+termsInForm (Exists v f) = termsInForm f
 
 varsInForm :: Formula Term -> [Variable]
-varsInForm = varsInTerms . termsInForm'
+varsInForm = varsInTerms . termsInForm
 ----
 
 -- c4e23
@@ -249,8 +249,8 @@ boundVarsInForm (Impl f f') = boundVarsInForm f ++ boundVarsInForm f'
 boundVarsInForm (Equi f f') = boundVarsInForm f ++ boundVarsInForm f'
 boundVarsInForm (Conj fs) = concat $ map boundVarsInForm fs
 boundVarsInForm (Disj fs) = concat $ map boundVarsInForm fs
-boundVarsInForm (Forall v f) = v : (boundVarsInForm f)
-boundVarsInForm (Exists v f) = v : (boundVarsInForm f)
+boundVarsInForm (Forall v f) = boundVarsInForm f
+boundVarsInForm (Exists v f) = boundVarsInForm f
 boundVarsInForm _ = []
 
 freeVarsInForm :: Formula Term -> [Variable]
