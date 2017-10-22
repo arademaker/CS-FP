@@ -1,0 +1,386 @@
+#+AUTHOR: bruno cuconato
+#+DATE: 2017-10-22
+#+EMAIL: bcclaro+gf@gmail.com
+#+TITLE: Haskell monad tutorial compilation
+
+* motivation: what monads can do
+one use of monads is to abstract away the possibility of failure in a
+calculation. example taken from [[https://en.wikibooks.org/wiki/Haskell/Understanding_monads][haskell wikibook]]:
+  
+  #+BEGIN_SRC haskell
+    father :: Person -> Maybe Person
+    mother :: Person -> Maybe Person
+
+    maternalGrandfather :: Person -> Maybe Person
+    maternalGrandfather p =
+        case mother p of
+            Nothing -> Nothing
+            Just mom -> father mom
+
+    maternalGrandfather p = mother p >>= father
+
+    bothGrandfathers :: Person -> Maybe (Person, Person)
+    bothGrandfathers p =
+      case father p of
+        Nothing -> Nothing
+        Just dad ->
+          case father dad of
+            Nothing -> Nothing
+            Just gf1 -- found first grandfather
+             ->
+              case mother p of
+                Nothing -> Nothing
+                Just mom ->
+                  case father mom of
+                    Nothing -> Nothing
+                    Just gf2 -- found second grandfather
+                     -> Just (gf1, gf2)
+
+    bothGrandfathers p =
+      father p >>=
+      (\dad ->
+         father dad >>=
+         (\gf1 ->
+            mother p >>= -- gf1 is only used in the final return
+            (\mom -> father mom >>= (\gf2 -> return (gf1, gf2)))))
+
+    bothGrandFathers p =
+      do
+        dad <- father p
+        dadsdad <- father dad
+        mom <- mother p
+        momsdad <- father mom
+        return (dadsdad, momsdad)
+  #+END_SRC
+
+  : x <- foo; return (x + 3)      corresponds to      foo >>= (\x -> return (x + 3))
+  
+  a value of type =M a= is interpreted as a statement of an imperative
+  language that returns a value of type a as result; and the semantics
+  of this language are determined by the monad M. (in the case of
+  Maybe, the semantics allows us to express failure; in the case of
+  List, multiple values, etc.)
+
+* before monads...
+
+monads are a superclass of =Applicative=, which is itself a superclass
+of =Functor=, so we'll begin by covering these two. all three are
+examples of the idea of abstracting out a common programming pattern
+as a definition.[fn:1]
+
+** functors
+
+#+BEGIN_SRC haskell
+
+inc :: [Int] -> [Int]
+inc []= []
+inc (n:ns) = n+1 : inc ns
+
+sqr :: [Int] -> [Int]
+sqr []= []
+sqr (n:ns) = n^2 : sqr ns
+
+map :: (a -> b) -> [a] -> [b]
+map f [] = []
+map f (x:xs) = f x : map f xs
+
+inc = map (+1)
+sqr = map (^2)
+
+#+END_SRC
+
+but the idea of mapping is not exclusive to lists: the =Functor= class
+abstracts the mapping concept into its =fmap= method:
+
+#+BEGIN_SRC haskell
+class Functor f where
+  fmap :: (a -> b) -> f a -> f b
+#+END_SRC
+
+note that =f= here is a structure, not a function (specifically, it is
+a parameterised type, a type that takes another type as a parameter).
+
+#+BEGIN_SRC haskell
+data Tree a = Leaf a | Node (Tree a) (Tree a) deriving Show
+
+instance Functor Tree where
+  -- fmap :: (a -> b) -> Tree a -> Tree b
+  fmap g (Leaf x) = Leaf (g x)
+  fmap g (Node l r) = Node (fmap g l) (fmap g r)
+#+END_SRC
+
+We can think of =f= as a container type, however, not all instances of
+functor fit this pattern. For example, the IO type is not a container
+type in the normal sense of the term because its values represent
+input/output actions whose internal structure we do not have access
+to, but it can readily be made into a functor:
+
+#+BEGIN_SRC haskell
+instance Functor IO where
+  -- fmap :: (a -> b) -> IO a -> IO b
+  fmap g mx = do {x <- mx; return (g x)}
+#+END_SRC
+
+benefits of functors:
+
+- we can use the same name for functions that are essentially the
+  same, rather than having to invent a separate name for each
+  instance. 
+
+- And secondly, we can define generic functions that can be used with
+  any functor.
+
+*** examples
+#+BEGIN_SRC haskell
+inc :: Functor f => f Int -> f Int
+inc = fmap (+1)
+
+> inc (Just 1)
+Just 2
+
+> inc [1,2,3,4,5]
+[2,3,4,5,6]
+
+> inc (Node (Leaf 1) (Leaf 2))
+Node (Leaf 2) (Leaf 3)
+#+END_SRC
+
+*** functor laws
+  : fmap id = id
+  : fmap (g . h) = fmap g . fmap h
+
+** applicatives
+
+Functors abstract the idea of mapping a function over each element of
+a structure. Suppose now that we wish to generalise this idea to allow
+functions with any number of arguments to be mapped, rather than being
+restricted to functions with a single argument.Functors abstract the
+idea of mapping a function over each element of a structure. Suppose
+now that we wish to generalise this idea to allow functions with any
+number of arguments to be mapped, rather than being restricted to
+functions with a single argument.
+
+#+BEGIN_SRC haskell
+
+fmap0 :: a -> f a
+
+fmap1 :: (a -> b) -> f a -> f b
+
+fmap2 :: (a -> b -> c) -> f a -> f b -> f c
+
+...
+
+pure :: a -> f a
+
+(<*>) :: f (a -> b) -> f a -> f b
+
+#+END_SRC
+
+A typical use of =pure= and =<*>= has the following form: 
+
+: pure g <*> x1 <*> x2 <*> ... <*> xn 
+
+Such expressions are said to be in applicative style, because of the
+similarity to normal function application notation =g x1 x2 ... xn=. In
+both cases, g is a curried function that takes n arguments of type a1
+... an and produces a result of type b. However, in applicative style,
+each argument xi has type f ai rather than just ai, and the overall
+result has type f b rather than b. Using this idea, we can now define
+the hierarchy of mapping functions:
+
+#+BEGIN_SRC haskell
+
+fmap0 :: a -> f a
+fmap0 = pure
+
+fmap1 :: (a -> b) -> f a -> f b
+fmap1 g x = pure g <*> x
+
+fmap2 :: (a -> b -> c) -> f a -> f b -> f c
+fmap2 g x y = pure g <*> x <*> y
+
+...
+
+class Functor f => Applicative f where
+pure :: a -> f a
+(<*>) :: f (a -> b) -> f a -> f b
+
+#+END_SRC
+
+*** examples
+#+BEGIN_SRC haskell
+
+instance Applicative Maybe where
+  -- pure :: a -> Maybe a
+  pure = Just
+  
+  -- (<*>) :: Maybe (a -> b) -> Maybe a -> Maybe b
+  Nothing <*> _= Nothing
+  (Just g) <*> mx = fmap g mx
+
+> pure (+1) <*> Just 1
+Just 2
+
+> pure (+) <*> Just 1 <*> Just 2
+Just 3
+
+> pure (+) <*> Nothing <*> Just 2
+Nothing
+
+instance Applicative [] where
+  -- pure :: a -> [a]
+  pure x = [x]
+  
+  -- (<*>) :: [a -> b] -> [a] -> [b]
+  gs <*> xs = [g x | g <- gs, x <- xs]
+
+> pure (+1) <*> [1,2,3]
+[2,3,4]
+
+> pure (+) <*> [1] <*> [2]
+[3]
+
+> pure (*) <*> [1,2] <*> [3,4]
+[3,4,6,8]
+
+#+END_SRC
+
+In this manner, the applicative style for Maybe supports a form of
+exceptional programming in which we can apply pure functions to
+arguments that may fail without the need to manage the propagation of
+failure ourselves, as this is taken care of automatically by the
+applicative machinery. 
+
+type [a] can be seen as a generalisation of Maybe a that permits
+multiple results in the case of success. More precisely, we can think
+of the empty list as representing failure, and a nonempty list as
+representing all the possible ways in which a result may succeed.
+
+applicative functors can also be viewed as abstracting the idea of
+applying pure functions to effectful arguments, with the precise form
+of effects that are permitted depending on the nature of the
+underlying functor.
+
+*** applicative laws
+#+BEGIN_SRC haskell
+
+pure id <*> x = x
+
+pure (g x) = pure g <*> pure x
+
+x <*> pure y = pure (\g -> gy) <*> x
+
+x <*> (y <*> z) = (pure (.) <*> x <*> y) <*> z
+
+#+END_SRC
+
+* monads
+
+again thinking of the =>>== operator for =Maybe=:
+
+#+BEGIN_SRC haskell
+(>>=) :: Maybe a -> (a -> Maybe b) -> Maybe b
+  mx >>= f = case mx of
+  Nothing -> Nothing
+  Just x -> f x
+#+END_SRC
+
+That is, >>= takes an argument of type a that may fail and a function
+of type a -> b whose result may fail, and returns a result of type b
+that may fail. If the argument fails we propagate the failure,
+otherwise we apply the function to the resulting value. In this
+manner, >>= integrates the sequencing of values of type Maybe with the
+processing of their results.
+
+#+BEGIN_SRC haskell
+
+class Applicative m => Monad m where
+  return :: a -> m a
+  (>>=) :: m a -> (a -> m b) -> m b
+  
+  return = pure
+
+#+END_SRC
+
+** examples
+
+#+BEGIN_SRC haskell
+
+  instance Monad [] where
+    -- (>>=) :: [a] -> (a -> [b]) -> [b]
+    xs >>= f = [y | x <- xs, y <- f x]
+
+  pairs :: [a] -> [b] -> [(a,b)]
+  pairs xs ys = do x <- xs
+                   y <- ys
+                   return (x,y)
+
+  > pairs [1,2] [3,4]
+  [(1,3),(1,4),(2,3),(2,4)]
+
+#+END_SRC
+
+this might be similar to this
+
+#+BEGIN_SRC haskell
+
+pairs :: [a] -> [b] -> [(a,b)]
+pairs xs ys = [(x,y) | x <- xs, y <- ys]
+
+#+END_SRC
+
+but the =do= notation can be used with any monad, while list
+comprehension only works on, well, lists.
+
+Unlike the other examples above, in this case the definitions for
+return and >>= are built-in to the language, rather than being defined
+within Haskell itself.
+
+#+BEGIN_SRC haskell
+
+    mapM :: Monad m => (a -> m b) -> [a] -> m [b]
+    mapM f [] = return []
+    mapM f (x:xs) = do y <- f x
+                       ys <- mapM f xs
+                       return (y:ys)
+
+    conv :: Char -> Maybe Int
+    conv c | isDigit c = Just (digitToInt c)
+           | otherwise = Nothing
+
+    > mapM conv "1234"
+    Just [1,2,3,4]
+
+    > mapM conv "123a"
+    Nothing
+
+  filterM :: Monad m => (a -> m Bool) -> [a] -> m [a]
+  filterM p [] = return []
+  filterM p (x:xs) = do b <- p x
+                        ys <- filterM p xs
+                        return (if b then x:ys else ys)
+
+  > filterM (\x -> [True,False]) [1,2,3]
+  [[1,2,3],[1,2],[1,3],[1],[2,3],[2],[3],[]]
+#+END_SRC
+
+** monad laws
+
+#+BEGIN_SRC haskell
+
+return x >>= f = f x
+-- return is identity of >>=
+mx >>= return = mx
+
+-- associativity
+(mx >>= f) >>= g = mx >>= (\x -> (f x >>= g))
+
+#+END_SRC
+
+* Footnotes
+
+[fn:1] here I am following very closely (= as in basically
+copy-pasting) the text on ~Programming in Haskell~, by Graham Hutton.
+
+
+

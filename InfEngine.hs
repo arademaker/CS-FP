@@ -118,8 +118,15 @@ f2s (as, OppClass bs, True)  = No      as (Class bs)
 f2s (as, OppClass bs, False) = Some    as (Class bs)
 f2s (as, Class bs,    False) = SomeNot as (Class bs)
 
-tellAbout :: KB -> Class -> [Statement]
+-- c5e32
+filterFacts :: KB -> Class -> KB
+filterFacts kb as = let nas = opp as in filter (\(c1,c2,_) -> c1 == as || c1 == nas || c2 == as || c2 == nas) kb
 
+report :: Class -> KB -> [Statement]
+report as kb = map f2s $ filterFacts kb as
+----
+
+tellAbout :: KB -> Class -> [Statement]
 tellAbout kb as = 
   [All as (Class bs) | (Class bs) <- supersets as kb, 
                         as /= (Class bs) ] 
@@ -174,7 +181,6 @@ preprocess = words . (map toLower) .
              (takeWhile (\ x -> isAlpha x || isSpace x))
 
 parse :: String -> Maybe Statement
-
 parse = parse' . preprocess
   where
     parse' ["all",as,"are",bs] = 
