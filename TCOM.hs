@@ -13,6 +13,14 @@ treeOfNumbers :: [(Int,Int)]
 treeOfNumbers = treeOfNumbers' 0
 ----
 
+--
+numberTree :: [[(Int,Int)]]
+numberTree = [[(n-x,x) | x <- [0..n]] | n <- [0..]]
+
+putTree :: [[(Int, Int)]] -> IO ()
+putTree = mapM_ print
+----
+
 -- c7e2
 treeAll = [(0,n) | n <- [0..]]
 treeSome = [(u,n) | n <- [1..], u <- [0..]]            
