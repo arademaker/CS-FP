@@ -1,0 +1,608 @@
+#+AUTHOR: bruno cuconato
+#+DATE: 2017-11-03
+#+EMAIL: bcclaro+csfp@gmail.com
+#+TITLE: The Composition of Meaning in Natural Language
+
+* Recap
+  In the last chapter we translated natural language sentences into
+  logical forms and then evaluated these logical forms with respect to
+  a model. We used Haskell as a lambda calculus engine for this
+  construction procedure. This worked well, but it has the
+  disadvantage that the Haskell interpreter hides the details of how
+  expressions of typed logic get simplified. In this chapter, we will
+  demonstrate that the composition of meaning can be carried out
+  without a logical form language as intermediate representation
+  level. We will show how models of predicate logic can be ex- tended
+  to models of typed logic, and how typed logic yields appropriate
+  meaning representations for the lexical items of natural language
+  fragments and provides the means for building up meanings in a
+  compositional way. But before all that, we must focus on
+  quantifiers.
+
+* rules of the game
+  An invitation to translate English sentences from an example
+  fragment of natural language given by some set of grammar rules into
+  some logic – predicate logic, or typed logic – presupposes two
+  things: 
+  - that you grasp the meanings of the formulas of the representation
+    language;
+  - that you understand the meanings of the English sentences.
+
+  Knowledge of the first kind can be made fully explicit, but because
+  of this presupposed under- standing of the original message, such
+  translations cannot count as explications of the concept of meaning
+  for natural language.
+
+  As we have seen in Section 6.2 (Predicate Logic as Representation
+  Language), it is possible to make knowledge of the meaning of a
+  fragment of natural language fully explicit. The procedure does not
+  presuppose knowledge of the meaning of complete natural language
+  sentences. Instead, it specifies how sentence meanings are derived
+  from the meanings of smaller building blocks. (The meaning of these
+  smallest building blocks is taken as given.)
+
+  In our example, these links are made by the interpretation
+  instructions for relation and function symbols in a predicate
+  logical model. *Computational semantics* has little or nothing to
+  say about the interpretation of semantic atoms. It has rather a lot
+  to say, however, about the process of composing complex meanings in
+  a systematic way out of the meanings of components.
+
+  - the principle of compositionality :: The meaning of an expression
+       is a function of the meanings of its immediate syntactic
+       components and their syntactic mode of composition.
+
+* quantification
+** Aristotle
+  An important goal in computational semantics for natural language is
+  to provide an account of the /process of drawing inferences/ in
+  natural language.
+
+  Aristotle’s theory of quantification has two logical defects:
+  - Quantifier combinations are not treated; only one quantifier per
+    sentence is allowed.
+  - /Non-standard/ quantifiers such as most, half of, at least five,
+    etc, are not covered.
+  A minor additional flaw is the assumption of existential
+  presupposition.
+
+** Frege
+  The first of these defects was removed by Frege. It is based on the
+  introduction of individual variables bound by the quantifiers ∀ and
+  ∃.  Quantifiers with their associated variables can combine with
+  arbitrarily complex predicate logical formulae to form new predicate
+  logical formulae, so a formula may contain an arbitrary number of
+  quantifiers.
+
+  Using standard quantifiers and equality it is also possible to
+  express numerical constraints like At least two A are B:
+  : ∃x∃y(x ≠ y ∧ Ax ∧ Ay ∧ Bx ∧ By).
+  It is not difficult to see that all disjunctions and conjunctions of
+  quantifiers of the forms at least n and at most m can be expressed
+  in terms of standard quantifiers and equality.
+
+  To illustrate the claim that first-order logic has no difficulty
+  with quantifier combinations, consider the translation:
+  : Every prince sang a ballad.
+  : ∀x(Prince x → ∃y(Ballad y ∧ Sing x y)).
+  Observe that the translation does not contain phrases corresponding
+  to the noun phrases every prince or a ballad. Given a natural
+  language sentence and its translation into first-order logic, it is
+  impossible to pinpoint the sub-expression in the translation that
+  gives the meaning of a particular noun phrase in the original. In
+  the translation into first-order logic, the noun phrases have been
+  syntactically eliminated.
+
+  #+BEGIN_EXAMPLE
+  A ballad was sung by every prince.
+  ∃y(Ballad y ∧ ∀x(Prince x → Sing x y))
+  ∀x(Prince x → ∃y(Ballad y ∧ Sing x y))  
+  #+END_EXAMPLE
+
+  The fact that both translations are appropriate for shows that the
+  sentence is ambiguous. It also shows that translating into
+  first-order logic can be used to disambiguate natural language
+  sentences.
+
+  when first-order predicate logic was still considered as the one and
+  only tool for semantic analysis, quantified noun phrases were
+  commonly regarded as systematically misleading expressions.  Their
+  natural language syntax did not correspond to their logic, for in
+  natural language they were separate constituents, but they
+  evaporated during the process of translation into first-order logic.
+
+  Fregean quantifiers still have problems:
+  - finding logical representation languages permitting the
+    preservation of noun phrases as separate constituents;
+  - finding procedures for translating from natural language to
+    logical representations that are not ad hoc; -- what is ad-hoc
+    about FOL?
+  - finding ways to treat non-standard quantifiers such as most,
+    preferably in a uniform framework with standard quantifiers.
+
+** The relational view of quantifiers
+   a quantifier is viewed as a two-place relation on the power set of
+   a domain of discourse (or universe) =E= satisfying certain
+   requirements. (You can read =E= as mnemonic for the set of
+   entities, for example.) The power set of a set =E=, notation
+   =P(E)=, is the set of all subsets of =E=. A two-place relation on
+   =P(E)= is a set of pairs of subsets of =E=. The relational
+   perspective on quantification is implicit in Montague grammar.
+
+   Below it will be shown that the relational view can be used to
+   remedy the defects of both the Aristotelian and the Fregean
+   theory. a representation language with generalized quantifier
+   expressions (ex- pressions denoting two-place relations between
+   sets) and a notation for lambda abstraction is eminently suited for
+   the compositional analysis of natural language sentences with
+   quantified noun phrases.
+
+   #+CAPTION: analysis of =Every princess laughed.=
+   | expression             | translation                  | type                        |
+   |------------------------+------------------------------+-----------------------------|
+   | every                  | *every*                      | (e -> t) -> ((e -> t) -> t) |
+   | princess               | /Princess/                   | (e -> t)                    |
+   | every princess         | *every* /Princess/           | (e -> t) -> t               |
+   | laughed                | /Laugh/                      | (e -> t)                    |
+   | every princess laughed | (*every* /Princess/) /Laugh/ | t                           |
+   |------------------------+------------------------------+-----------------------------|
+
+   The determiner every translates into an expression every denoting a
+   function from properties to a function from properties to truth
+   values. More precisely, every denotes the function mapping a
+   property P to the characteristic function of the set of all
+   properties having P as a subset.
+
+   This expression yields true in case the property of being a
+   princess is included in the property of laughing, false otherwise.
+
+   To see how quantifier combinations are dealt with compositionally:
+   : Every mermaid hummed a song.
+   The trick is finding the right translation for the transitive verb. This turns out to
+   be the lambda expression =λXλy -> X (λz -> Hum y z)=, where X is a variable
+   over noun phrase type expressions.
+   #+BEGIN_VERSE
+   (λXλy -> X (λz -> /Hum/ y z))(*a* /Song/).
+   λy -> (*a* /Song/)(λz -> /Hum/ y z).
+   #+END_VERSE
+   *a* denotes the function which maps every property P to (the
+   characteristic function of) the set of all properties having a
+   non-empty overlap with P. Feeding as argument to the expression
+   *every* /Mermaid/:
+   #+BEGIN_VERSE
+   (*every* /Mermaid/)(λy -> ((*a* /Song/)(λz -> /Hum/ y z))).
+   #+END_VERSE
+   #+CAPTION: analysis of =Every mermaid hummed a song.=
+   [[./media/every-mermaid.png]]
+
+** Conditions on Quantifier Relations
+   we view quantifiers as two-place relations on the power set of some
+   domain E, satisfying certain requirements. which ones?
+   
+   =All dwarfs work= is true in a given model if and only if the
+   relation of inclusion holds between the set of dwarfs in the model
+   and the set of workers in the model.
+
+   Abstracting from the domain of discourse, we can say that
+   determiner interpretations (henceforth simply called determiners)
+   pick out binary relations on sets of individuals, on arbitrary
+   domains of discourse E. The notation is D_{E}AB. We call A the
+   restriction of the quantifier and B its body. the NP =all dwarfs=
+   is the restriction of the determiner all, and the VP =work= is the
+   body.
+   
+   #+CAPTION: Interpretation of D_{E}AB as a relation between sets A and B
+   [[./media/deab.png]]
+
+   Not all two-place relations on sets of individuals are quantifier
+   relations. The first two requirements that quantifiers must meet
+   are general requirements for de- notations of determiners:
+   extension and conservativity, which will be abbreviated as EXT and
+   CONSE, respectively.
+   
+*** EXT
+   : For all A, B ⊆ E ⊆ E' : DᴇAB ⇔ Dᴇ'AB.
+   A relation observing EXT is stable under growth of the
+   universe. So, given sets A and B, only the objects in the minimal
+   universe A ∪ B matter.  An example is all: to determine the truth
+   of All dwarfs work, we only need the intersection of the set of
+   dwarfs and the set of workers. It does not matter at all how many
+   or which kind of entities are contained in the rest of the
+   domain. But not all natural language determiners do satisfy EXT. An
+   example of a determiner that does not is /many/ in the sense of
+   /relatively many/.
+
+*** CONSE
+    : For all A, B ⊆ E: DᴇAB ⇔ DᴇA(A ∩ B).
+    This property expresses that the first argument of a determiner
+    relation (the inter- pretation of the noun) plays a crucial role:
+    everything outside the extension of the first argument is
+    irrelevant. /Some/ is an example for a conservative determiner: to
+    determine the truth of =Some dwarfs work=, we only need to check
+    whether the set of dwarfs contains workers – nothing outside the
+    set of dwarfs will have any effect on the truth or falsity of the
+    sentence.
+    
+    One example that does not satisfy CONSE is only in the following
+    sentence.
+    : Only dwarfs sing during work.
+    This example is true in a situation where all singing workers are
+    dwarfs. Starting out from a situation like this, and adding some
+    non-dwarfs to the singing workers will it false. This shows
+    non-conservativity.
+
+    All is still well if it can be argued that noun phrases starting
+    with /only/, /mostly/, or /mainly/ (two other sources of
+    non-conservativity) are exceptional syntactically, in the sense
+    that these noun phrase prefixes are not really determiners. In the
+    case of only, it could be argued that only dwarfs has structure
+    : [NP [MOD only][NP dwarfs]]
+    , with only not a determiner but a noun phrase modifier, just as
+    in:
+    : Only Bombur sings during work.
+
+    However this may be, separating out the determiners satisfying
+    CONSE and EXT is important, for the two conditions taken together
+    ensure that the truth of =D AB= depends only on =A − B= and =A ∩
+    B=. (Thus, the combined effect of EXT and CONSE boils down to
+    limiting the domain of discourse relevant for the truth or falsity
+    of D E AB to two sets: the set of things which are A but not B,
+    and the set of things which are both A and B).
+
+*** ISOM
+    Next, the relational perspective suggests a very natural way of
+    distinguishing between expressions of quantity and other
+    relations. Quantifier relations satisfy the following condition of
+    isomorphy, formulated in terms of bijections.
+    : If f is a bijection from E to E', then DᴇAB ⇒ Dᴇ'f[A]f[B].
+    Here f [A], the image of A under f , is the set of all things
+    which are f-values of things in A. ISOM expresses that only the
+    cardinalities (numbers of elements) of the sets A and B matter,
+    for the image of a set under a bijection is a set with the same
+    number of elements as the original set. If D satisfies EXT, CONS,
+    and ISOM, it turns out that the truth of D AB depends only on the
+    cardinal numbers =|A-B|= and =|A∩B|=
+
+    A quantifier simply is a relation Q satisfying EXT, CONS, and
+    ISOM.
+    #+CAPTION: The Combined Effect of EXT, CONS, ISOM.
+    [[./media/ext-conse-isom.png]]
+    
+    examples:
+    - =All A are B= is true if and only if the number of things which
+      are A and not B is 0.
+    - =Some A is B= is true if and only if the number of things that are
+      both A and B is at least 1.
+    - =Most A are B= is true if and only if the number of things that
+      are both A and B exceeds the number of things that are A and not
+      B.
+
+** numerical trees
+   We now turn to a way to characterize quantifiers Q AB according to
+   the two numbers =|A − B|= and =|A ∩ B|=. We will then use this
+   characterization for the logical representation of quantifiers.
+
+   #+INCLUDE: "./TCOM.hs" src haskell :lines "7-14"
+   #+INCLUDE: "./TCOM.hs" src haskell :lines "16-24"
+
+** Logical Representations for Quantifiers
+   The pairs of cardinals that characterize a quantifier Q AB can be
+   used for representation purposes. Every quantifier is defined by
+   means of an arithmetical expression in two variables m and n, where
+   m is the number of elements in A − B, n the number of elements in A
+   ∩ B. Logical forms for quantified expressions can exploit this fact
+   (=↦= :: /translates as/):
+   - at least two ↦ λm,n -> n ≥ 2.
+   - all ↦ λm,n -> m = 0.
+   - no ↦ λm,n -> n = 0.
+
+   Logical operations on quantifiers can now be handled
+   compositionally, by performing the corresponding logical
+   operations on the arithmetical expressions:
+   - If /Q ↦ E/, then /not Q ↦ λm,n -> ¬ (Emn)/.
+   - If /Q_1 ↦ E_1/ and /Q_2 ↦ E_2/ , then /Q_1/ and /Q_2 ↦ λm,n ->
+     ((E_1 mn) ∧ (E_2 mn))/ and /[Q_1 or Q_2 ] ↦ λm,n -> ((E_1 mn) ∨
+     (E_2 mn))/.
+
+** Relational Properties
+   As quantifiers are relations, we can study their relational
+   properties and the way in which these properties are reflected in
+   the tree patterns. For example, a quantifier Q is reflexive if and
+   only if =∀X Q XX=. E.g. the quantifiers all and some are reflexive,
+   the quantifiers no and not all are not.
+   
+   One can now study questions about tree patterns such as the
+   following. If Q is reflexive, what will its tree pattern be like?
+   Can it be shown that every quantifier with this tree pattern is
+   reflexive? If some quantifier Q has a tree pattern with an outer
+   north east diagonal consisting of minus signs, which relational
+   property of Q does this reflect?
+
+   A relational property with linguistic interest is symmetry. A
+   quantifier Q is symmetric if and only if =∀X∀Y Q XY ⇔ Q Y X=.  The
+   linguistic interest of this class lies in the fact that the
+   symmetric quantifiers are precisely the class of quantifiers which
+   can occur at the Q position in /there/-existential sentences
+   (sentences of the form =There are Q=, e.g., =There are some...=).
+
+   its tree pattern is ...
+
+   Another example of a relational property of quantifiers with
+   linguistic interest (to be illustrated below) is upward
+   right-monotonicity in the second argument place:
+   - MON↑ :: If Q AB and B ⊆ B', then Q AB'.
+   This means that the truth or falsity of Q AB does not change if the
+   set B is ex- tended. Examples of quantifiers that upward
+   right-monotone are all, some, and at least five.
+
+   its tree pattern is ...
+
+   A quantifier relation is downward right-monotone in the second argument if the
+   following holds:
+   - MON↓ :: If Q AB and B' ⊆ B, then Q AB'.
+   I.e. the truth or falsity of Q AB is not affected by a reduction of
+   the set B. Examples are not all and no.
+
+   its tree pattern is ...
+
+   An example for a quantifier that satisfies neither MON↑ nor MON↓ is
+   an even number of . (You can see this by inspecting the tree
+   pattern.)
+
+   - ↑MON :: If Q AB and A ⊆ A', then Q A' B.
+   - ↓MON :: If Q AB and A' ⊆ A, then Q A' B.
+   Examples of ↑MON determiners are some and not all. All and no are
+   ↓MON determiners.
+
+** Quantifiers, [[http://www.inf.ed.ac.uk/teaching/courses/inf1/cl/notes/Comp1.pdf][Automata]], and Definability
+#+BEGIN_QUOTE
+
+
+- c7e11 :: Construct finite state machines for computing:
+  - /at least two/
+#+BEGIN_SRC dot :file ./media/at-least-2.png :cmdline -Kdot -Tpng :cache yes
+digraph atLeast2 {
+        rankdir=LR;
+        node [label="",shape=circle];
+        start [style=invis];
+        a [shape=doublecircle];
+        s0;
+        s1;
+        start -> s0;
+        s0 -> s0 [label="0"];
+        s0 -> s1 [label="1"];
+        s1 -> s1 [label="0"];
+        s1 -> a [label="1"];
+        a -> a [label="1"];
+        a -> a [label="0"];
+        }  
+#+END_SRC
+
+#+RESULTS:
+[[file:./media/at-least-2.png]]
+
+  - /at most five/
+#+BEGIN_SRC dot :file ./media/at-most-five.png :cmdline -Kdot -Tpng :cache yes
+  digraph atMost5 {
+          rankdir=LR;
+          node [label="",shape=doublecircle];
+          start [style=invis];
+          na [shape=circle];
+          s0;
+          s1;
+          s2;
+          s3;
+          s4;
+          start -> s0;
+          s0 -> s0 [label="0"];
+          s0 -> s1 [label="1"];
+          s1 -> s1 [label="0"];
+          s1 -> s2 [label="1"];
+          s2 -> s2 [label="0"];
+          s2 -> s3 [label="1"];
+          s3 -> s3 [label="0"];
+          s3 -> s4 [label="1"];
+          s4 -> s4 [label="0"];
+          s4 -> na [label="1"];
+          na -> na [label="1"];
+          na -> na [label="0"];
+          }
+#+END_SRC
+
+#+RESULTS:
+[[file:./media/at-most-five.png]]
+
+  - /between three and seven/
+#+BEGIN_SRC dot :file ./media/bet-3-and-7.png :cmdline -Kdot -Tpng :cache yes
+  digraph between3And7 {
+          rankdir=LR;
+          node [label="",shape=circle];
+          start [style=invis];
+          na;
+          s0;
+          s1;
+          s2;
+          node [label="",shape=doublecircle];
+          s3;
+          s4;
+          s5;
+          start -> s0;
+          s0 -> s0 [label="0"];
+          s0 -> s1 [label="1"];
+          s1 -> s1 [label="0"];
+          s1 -> s2 [label="1"];
+          s2 -> s2 [label="0"];
+          s2 -> s3 [label="1"];
+          s3 -> s3 [label="0"];
+          s3 -> s4 [label="1"];
+          s4 -> s4 [label="0"];
+          s4 -> s5 [label="1"];
+          s5 -> s5 [label="0"];
+          s5 -> na [label="1"];
+          na -> na[label="1"];
+          na -> na[label="0"];
+          }
+#+END_SRC
+
+#+RESULTS:
+[[file:./media/bet-3-and-7.png]]
+#+END_QUOTE
+
+Call a finite state machine permutation invariant if it has the
+following property: if reading a string s will get the machine from
+state p to state q, then reading any permutation of s will also get
+the machine from state p to state q.
+
+A finite state machine is acyclic if the machine does never return to
+a given state once it has left that state (in other words: 1-cycles
+are allowed, but all other cycles are out). An example of a quantifier
+that can be computed by a cyclic finite state machine but not by an
+acyclic one is an even number of.
+
+A quantifier is called first-order definable if it is definable in
+terms of the Fregean quantifiers ∀ and ∃, equality, and the two
+predicates for the restriction and the body of the quantifier. The
+question of first-order definability is relevant for the seman- tics
+of natural language, because the suitability of logical representation
+languages for given natural language fragments depends on it.
+
+#+BEGIN_QUOTE
+The first-order definable quantifiers are exactly those that can be
+computed by an acyclic permutation-invariant finite state machine
+#+END_QUOTE
+
+It follows from this that an even number of is not first-order
+definable (a cyclic automaton is needed for its computation), nor are
+quantifiers like half and most, which cannot be computed on a finite
+state machine at all (a memory stack is needed to ‘remember’ the
+numbers of elements in A − B and A ∩ B).
+
+#+BEGIN_QUOTE
+
+- c7e12 :: The automata perspective can be exploited to give an
+           account of semi-quantifiers involving ordinals:
+
+  - /Every tenth page of a fairy tale is boring./
+#+BEGIN_SRC dot :file ./media/every-tenth.png :cmdline -Kdot -Tpng
+  digraph every10 {
+           rankdir=LR;
+           node [label="",shape=circle];
+           start [style=invis];
+           s0;
+           s1;
+           s2;
+           s3;
+           s4;
+           s5;
+           s6;
+           s7;
+           s8;
+           s9;
+           a [shape=doublecircle];
+           start -> s0;
+           s0 -> s1 -> s2 -> s3 -> s4 -> s5 -> s6 -> s7 -> s8 -> s9 -> a;
+           a -> a;
+           }
+#+END_SRC
+
+#+RESULTS:
+[[file:./media/every-tenth.png]]
+
+  - /The first ten pages of a fairy tale are boring./
+#+BEGIN_SRC dot :file ./media/first-ten.png :cmdline -Kdot -Tpng
+  digraph first10 {
+           rankdir=LR;
+           node [label="",shape=doublecircle];
+           start [style=invis];
+           s0;
+           s1;
+           s2;
+           s3;
+           s4;
+           s5;
+           s6;
+           s7;
+           s8;
+           s9;
+           na [shape=circle];
+           start -> s0 -> s1 -> s2 -> s3 -> s4 -> s5 -> s6 -> s7 -> s8 -> s9 -> na;
+           na -> na;
+           }
+#+END_SRC
+
+#+RESULTS:
+[[file:./media/first-ten.png]]
+#+END_QUOTE
+
+* The Language of Typed Logic and Its Semantics
+  Assume that we have constants and variables available for all types
+  in the type hierarchy. Then the language of typed logic over these
+  is defined as follows:
+  #+BEGIN_VERSE
+type ::= e | t | (type -> type)
+expression ::= constant_type
+             | variable_type
+             | (\ variable_type_1 -> expression_type_2)_(type_1 -> type_2)
+             | (expression_{type_1 -> type_2} expression_type_1)_type_2
+  #+END_VERSE
+
+  #+BEGIN_QUOTE
+  - c7e13 :: Assume constant A has type e -> t and constant B has type 
+  (e -> t) -> t.  Variable x has type e, variable Y has type e ->
+  t. Which of the following expressions are well-typed?
+    - (\x -> (A x)) :: yes: =e -> t=.
+    - (B (\x -> (A x))) :: yes: =t=.
+    - (\Y -> (Y (\x -> (A x)))) :: yes: =((e -> t) -> x) -> x=, where
+         x is some type.
+    - (\Y -> (B Y)) :: yes: =(e -> t) -> t=.
+  #+END_QUOTE
+
+  A model M for typed logic consists of a domain D e together with an
+  interpretation function I which maps every constant of the language
+  to a function of the appropriate type in the domain hierarchy based
+  on D_e. A variable assignment g for typed logic maps every variable
+  of the language to a function of the appropriate type in the domain
+  hierarchy. The semantics for the language is given by defining a
+  function []^M_g which maps every expression of the language to a
+  function of the appropriate type.
+
+  - [ *constant* ]^M_g = I(*constant*)
+  - [ *variable* ]^M_g = g(*variable*)
+  - [(\ v_t1 -> E_t2)]^Mg = /h/, where h:D_t1 -> D_t2 is the function
+    given by \d -> [E]^M_{g[v:=d]}
+  - [(E_1 E_2)]^M_g = [E_{1}]^M_g([E_{2}]^M_g)
+
+  In fact, the logical constants of predicate logic can be viewed as
+  constants of typed logic, as follows: ¬ is a constant of type t → t
+  with the following interpretation.
+  - [¬] = h, where h is the function in t → t which maps 0 to 1 and
+    vice versa;
+  As we have seen already, ∧ and ∨ are constants of type t → t → t
+  with the following interpretations.
+  - [∧] = h, where h is the function in t → t → t which maps 1 to {(1,
+    1), (0, 0)} and 0 to {(1, 0), (0, 0)};
+  - [∨] = h, where h is the function in t → t → t which maps 1 to {(1,
+    1), (0, 1)} and 0 to {(1, 1), (0, 0)};
+  Note that {(1, 1), (0, 0)} is the identity function on {0, 1}.
+  - c7e15 :: Give the interpretation of the material implication
+             constant =->= in typed logic.  
+  =->= has type T = =t -> t -> t=, and interpretation function [->] =
+  h, where h is the function in T which maps 1 to {(1,1), (0,0)} and 0
+  to {(1,1), (0,1)};
+  - c7e16 :: Give the interpretation of the material equivalence
+             constant =<->= in typed logic.
+  =<->= has type T = =t -> t -> t=, and interpretation function [<->]
+  = h, where h is the function in T which maps 1 to {(1,1), (0,0)} and
+  0 to {(1,0), (0,1)};
+
+  The quantifiers ∃ and ∀ are constants of type (e → t) → t, with the
+  following interpretations.
+  - [∀] = h, where h is the function in (e → t) → t which maps the function that
+  characterizes D_e to 1 and every other characteristic function to 0;
+  - [∃], where h is the function in (e → t) → t which maps the function that
+  characterizes ∅ to 0 and every other characteristic function to 1.
+
+  It is possible to add constants for quantification over different
+  types. E.g. to express second-order quantification
+  (i.e. quantification over properties of things), one would need
+  quantifier constants of type ((e → t) → t) → t.
