@@ -32,7 +32,7 @@ data Game = Turn | Game Turn
 data Sent = Sent NP VP deriving Show
 data NP   = SnowWhite  | Alice  | Dorothy | Goldilocks 
           | LittleMook | Atreyu | Everyone | Someone
-          | NP1 DET CN | NP2 DET RCN deriving Show
+          | NP1 DET CN | NP2 DET RCN | NP3 MOD Int CN | NP4 MOD Int RCN deriving Show
 
 data DET  = The | Every | Some | No | Most deriving Show
 data CN   = Girl   | Boy   | Princess | Dwarf | Giant | Wizard | Sword | Dagger deriving Show 
@@ -41,6 +41,7 @@ data RCN  = RCN1 CN That VP | RCN2 CN That NP TV | RCN3 ADJ CN deriving Show
 data That = That deriving Show
 data VP   = Laughed | Cheered | Shuddered | VP1 TV NP | VP2 DV NP NP | VP3 AV To INF deriving Show 
 data TV   = Loved   | Admired | Helped | Defeated | Caught deriving Show 
+data MOD = AtLeast | AtMost deriving Show
 
 data DV   = Gave deriving Show
 data AV   = Hoped | Wanted deriving Show 
