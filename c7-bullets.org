@@ -595,3 +595,269 @@ expression ::= constant_type
     - E.g. to express second-order quantification (i.e. quantification
       over properties of things), one would need quantifier constants
       of type ((e → t) → t) → t.
+# exercise 7.17 - doubt?
+  - assume that for every type τ built from e and t we have a constant
+    i_{τ -> τ -> t} available to express the identity of two objects
+    of type τ .  
+    - we can abbreviate ((i b) a), for a, b of type e, as a = b.
+
+  - c7e18 :: Write out i_{t -> t -> t} . Which two-place connective
+             does this constant express?  
+  it expresses =<->=.
+
+  #+CAPTION: expressions in typed logic and their counterparts in predicate logic.
+  | Typed logic                       | Predicate logic |
+  |-----------------------------------+-----------------|
+  | (¬ (P x))                         | ¬Px             |
+  | ((∧ (P x)) (Q y))                 | Px∧Qy           |
+  | (∀ (λx -> (P x)))                 | ∀xPx            |
+  | (∀ (λx -> (∃ (λy -> ((R x) y))))) | ∀x∃yRxy         |
+  |-----------------------------------+-----------------|
+
+  - we can add syntatic sugar to this notation:
+    - we will write (λx -> (λy -> E)) as λxy -> E. 
+    - (((E a) b) c) can be written as Eabc.
+    - we can write ((∧ E_1 ) E_2 ) as E_1 ∧ E_2 and similarly for ∨, →
+      and ↔. We will also omit outermost parentheses.
+
+  - (((E a) b) c) may be written as Eabc, this is not
+    the same as E(a, b, c). *why?*
+    - currying!
+
+
+  - c7e19 :: Exercise 7.19 Assume Give(x, y, z) means that x gives y
+             to z. Use this to find a typed logic expression for
+             ‘receiving something from someone’.
+  \x -> ∃y.∃z.Give(y,z,x).
+
+  - translate /Siegfried gave Kriemhild the ring/:
+  : [ S [ NP Siegfried ][ VP [ TV [ DTV gave ] [ NP Kriemhild ]][ NP the ring ]]]
+  - we want to use λzyx -> Give(x, y, z) as translation for /gave/. 
+    - curried notation gives λzyx -> Give x y z or λzyx -> (((Give x) y) z). 
+    - the order in which Give takes its arguments does not reflect the
+      argument order that we read off the syntactic structure.
+    - use λzyx -> (((Give z) y) x), which reflects that Give is first
+      applied to the indirect object meaning, then to the direct
+      object meaning, and then to the subject meaning.
+
+* Reducing Expressions of Typed Logic 
+  : (((λzyx -> Give(x, y, z) c) b) a).
+  - To reduce this expression from to its simplest form, three steps
+    of so-called β-conversion are needed.
+
+  - β-conversion of an expression =λv -> E= followed by an argument
+    expression A, prefix =λv ->= is removed from the function
+    expression =λv -> E=, leaving E, and next the argument expression
+    A is substituted in E for all free occurrences of v. The free
+    occurrences of v in E are precisely the occurrences which were
+    bound by λv in =λv -> E=.
+
+  - when does this fail? 
+    - when it occurs a capturing of variables within the argument
+      expression A.
+    : ((λx -> (λy -> ((R y) x))) y).
+  - This problem can be avoided by performing β-conversion on an
+    alphabetic variant of the original expression, say on:
+    : ((λx → (λz → ((R z) x))) y).
+  
+  - this process of switching to an alphabetic variant is called
+    α-conversion. another example:
+    : ((λp → ∀x((P x) ↔ p))(Q x)).
+  - using α-conversion:
+    : ((λp → ∀z((P z) ↔ p))(Q x))
+
+  - variable freedom :: v is free in E if the following holds (we use
+       ≈ for the relation of being syntactically identical, i.e. for
+       being the same expression):
+    - v ≈ E;
+    - E ≈ (E_1 E_2 ), and v is free in E_1 or v is free in E_2;
+    - E ≈ (λx → E_1 ), and v ≉ x, and v is free in E_1.
+
+  - c7e20 :: Which occurrences of x are free?
+    - (λx → (P x)): none.
+    - ((λx → (P x)) x): the last one.
+    - (λx → ((R x) x)): none.
+    - ((λx → ((R x) x))x): the last one.
+    - ((λy → ((R x) y))x): all of them.
+
+  - c7e21 :: Same question for ((λy → ∃x((R x) y)) x), where one
+             should bear in mind that ∃x((R x) y) is shorthand for (∃
+             (λx → ((R x) y))).
+  the last one.
+
+  - E[v := s] :: substitution of s for free occurrences of v in E:
+    - If E ≈ v, then E[v := s] ≈ s, if E ≈ x ≉ v (i.e. E is a variable
+      different from v), then E[v := s] ≈ x, if E ≈ c (i.e. E is a
+      constant, and therefore different from v), then E[v := s] ≈ c.
+    - If E ≈ (E_1 E_2 ), then E[v := s] ≈ (E_{1}[v := s] E_{2}[v :=
+      s]).
+    - If E ≈ (λx → E_1 ), then:
+      - if v ≈ x, then E[v := s] ≈ E,
+      - if v ≉ x, then there are two cases:
+        - if x is not free in s or v is not free in E, then E[v := s]
+          ≈ (λx → E_1 [v := s]);
+        - if x is free in s and v is free in E, then E[v := s] ≈ (λy →
+          E_1 [x := y][v := s]), for some y which is not free in s and
+          not free in E_1.
+
+  - we need the last bullet because:
+    : (λy → (P x))[x := y]
+    - consider applying the second last bullet instead of the last.
+  
+  - *-redution :: three flavours: β-reduction, α-reduction, and
+                  η-reduction, for which we use arrows -α->, -β->, and
+                  -η->.
+
+    - Beta reduction :: ~((λv → E) s) -β-> E[v := s]~ 
+    Condition: v and s are of the same type (otherwise the expression
+                  to be reduced is not well-typed).
+    - Alpha reduction :: ~(λv → E) -α-> (λx → E[v := x])~
+    Conditions: v and x are of the same type, and x is not free in E.
+    - Eta reduction: =((λv → E) v) -η-> E=
+    
+  - the α-reduction rule serves only to state in an explicit fashion
+    that lambda calculations are insensitive to switches to alphabetic
+    variants.
+  - The η-reduction rule: P ≈ (λx → (P x))
+
+  - Applying β-reduction to the below expression gives:
+    : (((λzyx → Give(x, y, z) c) b) a) -β-> Give(a, b, c)
+
+  - to be fully precise we have to state explicitly that expressions
+    can be reduced 'in context':
+
+# not sure I got this?
+  | E -β-> E'         |
+  |-------------------|
+  | (F E) -β-> (F E') |
+
+  | E -β-> E'         |
+  |-------------------|
+  | (E F) -β-> (E' F) |
+
+  | E -β-> E'                 |
+  |---------------------------|
+  | (\v -> E) -β-> (\v -> E') |
+
+  - note: here F is assumed to have the appropriate type, of
+    course. These principles allow β-reductions at arbitrary depth
+    within expressions.
+
+  - c7e22 :: Reduce the following expressions to their simplest forms.
+    - ((λY → (λx → (Y x))) P ) ≈ (\x -> (P x))
+    - (((λY → (λx → (Y x))) P ) y) ≈ (P y)
+    - ((λP → (λQ → ∃x(P x ∧ Qx))) A) ≈ (\Q -> ∃x(A x ∧ Q x))
+    - (((λP → (λQ → ∃x(P x ∧ Qx))) A) B) ≈ ∃x(A x ∧ B x)
+    - ((λP → (λQ -> ∀x(P x → Qx)))(λy → ((λx → R(x, y)) j))) ≈ 
+      ((λP → (λQ -> ∀x(P x → Qx)))(λy → R(j, y))) ≈
+      (λQ -> ∀x(((λy → R(j, y)) x) → Qx)) ≈
+      (\Q -> ∀x(R(j, x) → Q x))
+
+  - =->>= :: we write E_1 ->> "E_1 reduces in a number of α, β, η steps
+           to E_2 ."
+
+  - Confluence property (or: Church-Rosser property) :: For all
+       expressions E, E_1 , E_2 of typed logic: if E ->> E_1 and E ->>
+       E_2 , then there is an expression F with E_1 ->> F and E_2 ->>
+       F .
+
+  - more definitions: An expression of the form ((λv → E) s) is called
+    a *β-redex* (for: β-reducible expression). E[v := s] is called the
+    *contractum* of ((λv → E) s). An expression that does not contain
+    any redexes is called a *normal form*.
+
+  - Normal form property :: Every expression of typed logic can be
+       reduced to a normal form.
+
+  - confluence property + normal form property -> the normal forms of
+    an expression E are identical modulo α-conversion. That is to say,
+    all normal forms of E are alphabetic variants of one another.
+
+  - The normal form property holds thanks to the restrictions imposed
+    by the typing discipline. 
+    - Untyped lambda calculus lacks this property (see exercise below).
+    - In typed lambda calculus this is forbidden, because (X X) cannot
+      be consistently typed.
+
+  - c7e23 :: In untyped lambda calculus, expressions like (λx → (x x))
+             are well-formed. Show that ((λx -> (x x))(λx → (x x)))
+             does not have a normal form.
+  ((λx -> (x x))(λx → (x x))) -α-> ((\y -> (y y))(\x -> (x x))) -β->
+  ((\x -> (x x))(\x -> (x x))), which takes us back to where we were;
+  therefore, we can not find a normal form for this expression.
+
+* Typed Meanings for Natural Language
+  Now we are ready for another exercise in composition of meaning for
+  natural language. 
+  - We will illustrate the theory with our fragment from before.
+  - Every syntax rule has a semantic counterpart to specify how the
+    meaning representation of the whole is built from the meaning
+    representations of the components. 
+  - [X] is used as notation for the meaning of X.
+
+  - Sentences are interpreted as function application of the NP
+    meaning to the VP meaning:
+  : S −→ NP VP 
+  : [S] −→ ([NP] [VP])
+
+  - NPs are generalized quantifiers, or as determiner meanings applied
+    to common noun meanings:
+
+  | NP --> /Snow White/ | [NP] --> \P -> (P s)   |
+  | NP --> /Alice/      | [NP] --> \P -> (P a)   |
+  | ...                 | ...                    |
+  | NP --> DET CN       | [NP] --> ([DET] [CN])  |
+  | NP --> DET RCN      | [NP] --> ([DET] [RCN]) |
+ 
+  *(see book pp. 173-- for the rest)*
+
+  - example =[ S [ NP Alice ][ VP [ TV admired ][ NP Dorothy ]]]=:
+  : ([Alice] (λu → [Dorothy] (λv → (((λx → (λy → ((Admire x) y))) v) u))))
+  : ->> ((Admire d) a).
+
+  - c7e24 :: Give the compositional translation for /Snow White helped
+             some dwarf/, and reduce it to normal form.
+  : [S [NP Snow White] [VP [TV helped] [NP [DET some] [CN Dwarf]]]]
+  : ([Snow White] ((\u -> ([NP [DET some] [CN Dwarf]] ((\v -> (\xy -> ((Help x) y))) v))) u))
+  : ([Snow White] ((\u -> ([NP [DET some] [CN Dward]] ...
+  : ∃x. (Dwarf x ∧ Helped s x)
+
+* Implementing Semantic Interpretation
+  We will proceed by defining for every syntactic category an
+  interpretation function of the appropriate type, using Entity for e
+  and Bool for t. The interpretation of sentences has type Bool, so
+  the interpretation function intS gets type Sent -> Bool.
+
+  *check book or code*
+
+* Handling Ambiguity
+  If a natural language expression E is ambiguous, i.e. if E has
+  several distinct meanings, then, under the assumption that these
+  meanings are arrived at in a compositional way, there are three
+  possible sources for the ambiguity (combinations are possible, of
+  course):
+  - The ambiguity is lexical: E contains a word with several distinct
+    meanings.  An example is /a splendid ball/.
+  - The ambiguity is structural: E can be assigned several distinct
+    syntactic structures. Examples are /old [men and women]/ versus
+    /[old men] and women/, or: /the boy saw the [girl with the
+    binoculars]/ versus /the boy saw [the girl] [with the
+    binoculars]/.
+  - The ambiguity is derivational: the syntactic structure that E
+    exhibits can be derived in more than one way. An example is the
+    sentence /Every prince sang some ballad/. It is not structurally
+    ambiguous, but in order to account for the ∃ ∀ reading one might
+    want to assume that one of the ways in which the structure can be
+    derived is by combining /some ballad/ with the incomplete
+    expression /every prince sang __/.
+
+** lexical ambiguities
+   Lexical ambiguities can be handled in a fragment like ours by means
+   of multiplying lexical entries. The two meanings of ball give rise
+   to different translations:
+   | CN −→ ball  | [CN] --> (\x -> (Ball_1 x)) |
+   | CN --> ball | [CN] --> (\x -> (Ball_2 x)) |
+
+   If we use these translations, then lexical ambiguity shows up in
+   the fact that /The ball was nice/ will receive two parses, each
+   with its own translation.
