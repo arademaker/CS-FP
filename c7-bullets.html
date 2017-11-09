@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>The Composition of Meaning in Natural Language</title>
-<!-- 2017-11-06 Seg 12:05 -->
+<!-- 2017-11-09 Qui 11:49 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="bruno cuconato" />
@@ -205,6 +205,14 @@ for the JavaScript code in this tag.
 </ul>
 </li>
 <li><a href="#sec-4">4. The Language of Typed Logic and Its Semantics</a></li>
+<li><a href="#sec-5">5. Reducing Expressions of Typed Logic</a></li>
+<li><a href="#sec-6">6. Typed Meanings for Natural Language</a></li>
+<li><a href="#sec-7">7. Implementing Semantic Interpretation</a></li>
+<li><a href="#sec-8">8. Handling Ambiguity</a>
+<ul>
+<li><a href="#sec-8-1">8.1. lexical ambiguities</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -525,14 +533,10 @@ non-empty overlap with P. Feeding as argument to the expression
 <h3 id="sec-3-4"><span class="section-number-3">3.4</span> Conditions on Quantifier Relations</h3>
 <div class="outline-text-3" id="text-3-4">
 <ul class="org-ul">
-<li>we view quantifiers as two-place relations on the power set of some
+<li>we view quantifiers as two-place relations on the power set of
+some domain E, satisfying certain requirements. but which ones?
 </li>
-</ul>
-<p>
-domain E, satisfying certain requirements. but which ones?
-</p>
 
-<ul class="org-ul">
 <li><code>All dwarfs work</code> is true in a given model if and only if the
 relation of inclusion holds between the set of dwarfs in the
 model and the set of workers in the model.
@@ -719,23 +723,24 @@ B.
 <div class="org-src-container">
 
 <pre class="src src-haskell"><span style="color: #b22222;">-- </span><span style="color: #b22222;">c7e1</span>
-<span style="color: #0000ff;">treeOfNumbers'</span> <span style="color: #a0522d;">::</span> <span style="color: #228b22;">Int</span> <span style="color: #a0522d;">-&gt;</span> [(<span style="color: #228b22;">Int</span>,<span style="color: #228b22;">Int</span>)]
-<span style="color: #0000ff;">treeOfNumbers'</span> n <span style="color: #a0522d;">=</span> [(n<span style="color: #a0522d;">-</span>x,x) <span style="color: #a0522d;">|</span> x <span style="color: #a0522d;">&lt;-</span> [0<span style="color: #a0522d;">..</span>n]] <span style="color: #a0522d;">++</span> treeOfNumbers' (n<span style="color: #a0522d;">+</span>1) 
-
-<span style="color: #0000ff;">treeOfNumbers</span> <span style="color: #a0522d;">::</span> [(<span style="color: #228b22;">Int</span>,<span style="color: #228b22;">Int</span>)]
 <span style="color: #b22222;">--  </span><span style="color: #b22222;">(|A &#8722; B|, |A &#8745; B|)</span>
-<span style="color: #0000ff;">treeOfNumbers</span> <span style="color: #a0522d;">=</span> treeOfNumbers' 0
+<span style="color: #0000ff;">treeOfNumbers</span> <span style="color: #a0522d;">::</span> [(<span style="color: #228b22;">Int</span>,<span style="color: #228b22;">Int</span>)]
+<span style="color: #0000ff;">treeOfNumbers</span> <span style="color: #a0522d;">=</span> concat numberTree
+
+<span style="color: #0000ff;">numberTree</span> <span style="color: #a0522d;">::</span> [[(<span style="color: #228b22;">Int</span>,<span style="color: #228b22;">Int</span>)]]
+<span style="color: #0000ff;">numberTree</span> <span style="color: #a0522d;">=</span> [[(n<span style="color: #a0522d;">-</span>x,x) <span style="color: #a0522d;">|</span> x <span style="color: #a0522d;">&lt;-</span> [0<span style="color: #a0522d;">..</span>n]] <span style="color: #a0522d;">|</span> n <span style="color: #a0522d;">&lt;-</span> [0<span style="color: #a0522d;">..</span>]]
 </pre>
 </div>
 <div class="org-src-container">
 
-<pre class="src src-haskell"><span style="color: #b22222;">--</span>
-<span style="color: #0000ff;">numberTree</span> <span style="color: #a0522d;">::</span> [[(<span style="color: #228b22;">Int</span>,<span style="color: #228b22;">Int</span>)]]
-<span style="color: #0000ff;">numberTree</span> <span style="color: #a0522d;">=</span> [[(n<span style="color: #a0522d;">-</span>x,x) <span style="color: #a0522d;">|</span> x <span style="color: #a0522d;">&lt;-</span> [0<span style="color: #a0522d;">..</span>n]] <span style="color: #a0522d;">|</span> n <span style="color: #a0522d;">&lt;-</span> [0<span style="color: #a0522d;">..</span>]]
-
-<span style="color: #0000ff;">putTree</span> <span style="color: #a0522d;">::</span> [[(<span style="color: #228b22;">Int</span>, <span style="color: #228b22;">Int</span>)]] <span style="color: #a0522d;">-&gt;</span> <span style="color: #228b22;">IO</span> <span style="color: #228b22;">()</span>
-<span style="color: #0000ff;">putTree</span> <span style="color: #a0522d;">=</span> mapM_ print
+<pre class="src src-haskell"><span style="color: #0000ff;">putTree</span> <span style="color: #a0522d;">=</span> mapM_ print
 <span style="color: #b22222;">--</span><span style="color: #b22222;">--</span>
+
+<span style="color: #b22222;">-- </span><span style="color: #b22222;">c7e2</span>
+<span style="color: #0000ff;">treeAll</span> <span style="color: #a0522d;">=</span> [(0,n) <span style="color: #a0522d;">|</span> n <span style="color: #a0522d;">&lt;-</span> [0<span style="color: #a0522d;">..</span>]]
+<span style="color: #0000ff;">treeSome</span> <span style="color: #a0522d;">=</span> [(u,n) <span style="color: #a0522d;">|</span> n <span style="color: #a0522d;">&lt;-</span> [1<span style="color: #a0522d;">..</span>], u <span style="color: #a0522d;">&lt;-</span> [0<span style="color: #a0522d;">..</span>]]            
+<span style="color: #0000ff;">treeNo</span> <span style="color: #a0522d;">=</span> [(n, 0) <span style="color: #a0522d;">|</span> n <span style="color: #a0522d;">&lt;-</span> [0<span style="color: #a0522d;">..</span>]]
+<span style="color: #0000ff;">treeNotAll</span> <span style="color: #a0522d;">=</span> [(n, u) <span style="color: #a0522d;">|</span> n <span style="color: #a0522d;">&lt;-</span> [1<span style="color: #a0522d;">..</span>], u <span style="color: #a0522d;">&lt;-</span> [0<span style="color: #a0522d;">..</span>]]
 </pre>
 </div>
 </div>
@@ -1130,13 +1135,599 @@ of type ((e → t) → t) → t.
 </ul>
 </li>
 </ul>
+
+<ul class="org-ul">
+<li>assume that for every type τ built from e and t we have a constant
+i<sub>τ -&gt; τ -&gt; t</sub> available to express the identity of two objects
+of type τ .  
+<ul class="org-ul">
+<li>we can abbreviate ((i b) a), for a, b of type e, as a = b.
+</li>
+</ul>
+</li>
+
+<li id="c7e18">Write out i<sub>t -&gt; t -&gt; t</sub> . Which two-place connective
+does this constant express?  
+</li>
+</ul>
+<p>
+it expresses <code>&lt;-&gt;</code>.
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+<caption class="t-above"><span class="table-number">Table 2:</span> expressions in typed logic and their counterparts in predicate logic.</caption>
+
+<colgroup>
+<col  class="left" />
+
+<col  class="left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="left">Typed logic</th>
+<th scope="col" class="left">Predicate logic</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="left">(¬ (P x))</td>
+<td class="left">¬Px</td>
+</tr>
+
+<tr>
+<td class="left">((∧ (P x)) (Q y))</td>
+<td class="left">Px∧Qy</td>
+</tr>
+
+<tr>
+<td class="left">(∀ (λx -&gt; (P x)))</td>
+<td class="left">∀xPx</td>
+</tr>
+
+<tr>
+<td class="left">(∀ (λx -&gt; (∃ (λy -&gt; ((R x) y)))))</td>
+<td class="left">∀x∃yRxy</td>
+</tr>
+</tbody>
+</table>
+
+<ul class="org-ul">
+<li>we can add syntatic sugar to this notation:
+<ul class="org-ul">
+<li>we will write (λx -&gt; (λy -&gt; E)) as λxy -&gt; E. 
+</li>
+<li>(((E a) b) c) can be written as Eabc.
+</li>
+<li>we can write ((∧ E<sub>1</sub> ) E<sub>2</sub> ) as E<sub>1</sub> ∧ E<sub>2</sub> and similarly for ∨, →
+and ↔. We will also omit outermost parentheses.
+</li>
+</ul>
+</li>
+
+<li>(((E a) b) c) may be written as Eabc, this is not
+the same as E(a, b, c). <b>why?</b>
+<ul class="org-ul">
+<li>currying!
+</li>
+</ul>
+</li>
+</ul>
+
+
+<dl class="org-dl">
+<dt> c7e19 </dt><dd>Exercise 7.19 Assume Give(x, y, z) means that x gives y
+to z. Use this to find a typed logic expression for
+‘receiving something from someone’.
+</dd>
+</dl>
+<p>
+\x -&gt; ∃y.∃z.Give(y,z,x).
+</p>
+
+<ul class="org-ul">
+<li>translate <i>Siegfried gave Kriemhild the ring</i>:
+</li>
+</ul>
+<pre class="example">
+[ S [ NP Siegfried ][ VP [ TV [ DTV gave ] [ NP Kriemhild ]][ NP the ring ]]]
+</pre>
+<ul class="org-ul">
+<li>we want to use λzyx -&gt; Give(x, y, z) as translation for <i>gave</i>. 
+<ul class="org-ul">
+<li>curried notation gives λzyx -&gt; Give x y z or λzyx -&gt; (((Give x) y) z). 
+</li>
+<li>the order in which Give takes its arguments does not reflect the
+argument order that we read off the syntactic structure.
+</li>
+<li>use λzyx -&gt; (((Give z) y) x), which reflects that Give is first
+applied to the indirect object meaning, then to the direct
+object meaning, and then to the subject meaning.
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5"><span class="section-number-2">5</span> Reducing Expressions of Typed Logic</h2>
+<div class="outline-text-2" id="text-5">
+<pre class="example">
+(((λzyx -&gt; Give(x, y, z) c) b) a).
+</pre>
+<ul class="org-ul">
+<li>To reduce this expression from to its simplest form, three steps
+of so-called β-conversion are needed.
+</li>
+
+<li>β-conversion of an expression <code>λv -&gt; E</code> followed by an argument
+expression A, prefix <code>λv -&gt;</code> is removed from the function
+expression <code>λv -&gt; E</code>, leaving E, and next the argument expression
+A is substituted in E for all free occurrences of v. The free
+occurrences of v in E are precisely the occurrences which were
+bound by λv in <code>λv -&gt; E</code>.
+</li>
+
+<li>when does this fail? 
+<ul class="org-ul">
+<li>when it occurs a capturing of variables within the argument
+expression A.
+</li>
+</ul>
+<pre class="example">
+((λx -&gt; (λy -&gt; ((R y) x))) y).
+</pre>
+</li>
+<li>This problem can be avoided by performing β-conversion on an
+alphabetic variant of the original expression, say on:
+<pre class="example">
+((λx → (λz → ((R z) x))) y).
+</pre>
+</li>
+
+<li>this process of switching to an alphabetic variant is called
+α-conversion. another example:
+<pre class="example">
+((λp → ∀x((P x) ↔ p))(Q x)).
+</pre>
+</li>
+<li>using α-conversion:
+<pre class="example">
+((λp → ∀z((P z) ↔ p))(Q x))
+</pre>
+</li>
+
+<li id="variable freedom">v is free in E if the following holds (we use
+≈ for the relation of being syntactically identical, i.e. for
+being the same expression):
+<ul class="org-ul">
+<li>v ≈ E;
+</li>
+<li>E ≈ (E<sub>1</sub> E<sub>2</sub> ), and v is free in E<sub>1</sub> or v is free in E<sub>2</sub>;
+</li>
+<li>E ≈ (λx → E<sub>1</sub> ), and v ≉ x, and v is free in E<sub>1</sub>.
+</li>
+</ul>
+</li>
+
+<li id="c7e20">Which occurrences of x are free?
+<ul class="org-ul">
+<li>(λx → (P x)): none.
+</li>
+<li>((λx → (P x)) x): the last one.
+</li>
+<li>(λx → ((R x) x)): none.
+</li>
+<li>((λx → ((R x) x))x): the last one.
+</li>
+<li>((λy → ((R x) y))x): all of them.
+</li>
+</ul>
+</li>
+
+<li id="c7e21">Same question for ((λy → ∃x((R x) y)) x), where one
+should bear in mind that ∃x((R x) y) is shorthand for (∃
+(λx → ((R x) y))).
+</li>
+</ul>
+<p>
+the last one.
+</p>
+
+<dl class="org-dl">
+<dt> E[v := s] </dt><dd>substitution of s for free occurrences of v in E:
+<ul class="org-ul">
+<li>If E ≈ v, then E[v := s] ≈ s, if E ≈ x ≉ v (i.e. E is a variable
+different from v), then E[v := s] ≈ x, if E ≈ c (i.e. E is a
+constant, and therefore different from v), then E[v := s] ≈ c.
+</li>
+<li>If E ≈ (E<sub>1</sub> E<sub>2</sub> ), then E[v := s] ≈ (E<sub>1</sub>[v := s] E<sub>2</sub>[v :=
+s]).
+</li>
+<li>If E ≈ (λx → E<sub>1</sub> ), then:
+<ul class="org-ul">
+<li>if v ≈ x, then E[v := s] ≈ E,
+</li>
+<li>if v ≉ x, then there are two cases:
+<ul class="org-ul">
+<li>if x is not free in s or v is not free in E, then E[v := s]
+≈ (λx → E<sub>1</sub> [v := s]);
+</li>
+<li>if x is free in s and v is free in E, then E[v := s] ≈ (λy →
+E<sub>1</sub> [x := y][v := s]), for some y which is not free in s and
+not free in E<sub>1</sub>.
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</dd>
+
+<dt> (no term) </dt><dd>we need the last bullet because:
+<pre class="example">
+(λy → (P x))[x := y]
+</pre>
+<ul class="org-ul">
+<li>consider applying the second last bullet instead of the last.
+</li>
+</ul>
+</dd>
+
+<dt> *-redution </dt><dd>three flavours: β-reduction, α-reduction, and
+η-reduction, for which we use arrows -α-&gt;, -β-&gt;, and
+-η-&gt;.
+
+<dl class="org-dl">
+<dt> Beta reduction </dt><dd><code>((λv → E) s) -β-&gt; E[v := s]</code> 
+</dd>
+</dl>
+<p>
+Condition: v and s are of the same type (otherwise the expression
+              to be reduced is not well-typed).
+</p>
+<dl class="org-dl">
+<dt> Alpha reduction </dt><dd><code>(λv → E) -α-&gt; (λx → E[v := x])</code>
+</dd>
+</dl>
+<p>
+Conditions: v and x are of the same type, and x is not free in E.
+</p>
+<ul class="org-ul">
+<li>Eta reduction: <code>((λv → E) v) -η-&gt; E</code>
+</li>
+</ul>
+</dd>
+
+<dt> (no term) </dt><dd>the α-reduction rule serves only to state in an explicit fashion
+that lambda calculations are insensitive to switches to alphabetic
+variants.
+</dd>
+<dt> (no term) </dt><dd>The η-reduction rule: P ≈ (λx → (P x))
+</dd>
+
+<dt> (no term) </dt><dd>Applying β-reduction to the below expression gives:
+<pre class="example">
+(((λzyx → Give(x, y, z) c) b) a) -β-&gt; Give(a, b, c)
+</pre>
+</dd>
+
+<dt> (no term) </dt><dd>to be fully precise we have to state explicitly that expressions
+can be reduced 'in context':
+</dd>
+</dl>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="left">E -β-&gt; E'</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="left">(F E) -β-&gt; (F E')</td>
+</tr>
+</tbody>
+</table>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="left">E -β-&gt; E'</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="left">(E F) -β-&gt; (E' F)</td>
+</tr>
+</tbody>
+</table>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="left">E -β-&gt; E'</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="left">(\v -&gt; E) -β-&gt; (\v -&gt; E')</td>
+</tr>
+</tbody>
+</table>
+
+<ul class="org-ul">
+<li>note: here F is assumed to have the appropriate type, of
+course. These principles allow β-reductions at arbitrary depth
+within expressions.
+</li>
+
+<li id="c7e22">Reduce the following expressions to their simplest forms.
+<ul class="org-ul">
+<li>((λY → (λx → (Y x))) P ) ≈ (\x -&gt; (P x))
+</li>
+<li>(((λY → (λx → (Y x))) P ) y) ≈ (P y)
+</li>
+<li>((λP → (λQ → ∃x(P x ∧ Qx))) A) ≈ (\Q -&gt; ∃x(A x ∧ Q x))
+</li>
+<li>(((λP → (λQ → ∃x(P x ∧ Qx))) A) B) ≈ ∃x(A x ∧ B x)
+</li>
+<li>((λP → (λQ -&gt; ∀x(P x → Qx)))(λy → ((λx → R(x, y)) j))) ≈ 
+((λP → (λQ -&gt; ∀x(P x → Qx)))(λy → R(j, y))) ≈
+(λQ -&gt; ∀x(((λy → R(j, y)) x) → Qx)) ≈
+(\Q -&gt; ∀x(R(j, x) → Q x))
+</li>
+</ul>
+</li>
+
+<li id="<code>-&gt;&gt;</code>">we write E<sub>1</sub> -&gt;&gt; "E<sub>1</sub> reduces in a number of α, β, η steps
+to E<sub>2</sub> ."
+</li>
+
+<li id="Confluence property (or: Church-Rosser property)">For all
+expressions E, E<sub>1</sub> , E<sub>2</sub> of typed logic: if E -&gt;&gt; E<sub>1</sub> and E -&gt;&gt;
+E<sub>2</sub> , then there is an expression F with E<sub>1</sub> -&gt;&gt; F and E<sub>2</sub> -&gt;&gt;
+F .
+</li>
+
+<li>more definitions: An expression of the form ((λv → E) s) is called
+a <b>β-redex</b> (for: β-reducible expression). E[v := s] is called the
+<b>contractum</b> of ((λv → E) s). An expression that does not contain
+any redexes is called a <b>normal form</b>.
+</li>
+
+<li id="Normal form property">Every expression of typed logic can be
+reduced to a normal form.
+</li>
+
+<li>confluence property + normal form property -&gt; the normal forms of
+an expression E are identical modulo α-conversion. That is to say,
+all normal forms of E are alphabetic variants of one another.
+</li>
+
+<li>The normal form property holds thanks to the restrictions imposed
+by the typing discipline. 
+<ul class="org-ul">
+<li>Untyped lambda calculus lacks this property (see exercise below).
+</li>
+<li>In typed lambda calculus this is forbidden, because (X X) cannot
+be consistently typed.
+</li>
+</ul>
+</li>
+
+<li id="c7e23">In untyped lambda calculus, expressions like (λx → (x x))
+are well-formed. Show that ((λx -&gt; (x x))(λx → (x x)))
+does not have a normal form.
+</li>
+</ul>
+<p>
+((λx -&gt; (x x))(λx → (x x))) -α-&gt; ((\y -&gt; (y y))(\x -&gt; (x x))) -β-&gt;
+((\x -&gt; (x x))(\x -&gt; (x x))), which takes us back to where we were;
+therefore, we can not find a normal form for this expression.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6"><span class="section-number-2">6</span> Typed Meanings for Natural Language</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+Now we are ready for another exercise in composition of meaning for
+natural language. 
+</p>
+<ul class="org-ul">
+<li>We will illustrate the theory with our fragment from before.
+</li>
+<li>Every syntax rule has a semantic counterpart to specify how the
+meaning representation of the whole is built from the meaning
+representations of the components. 
+</li>
+<li><code>[X]</code> is used as notation for the meaning of X.
+</li>
+
+<li>Sentences are interpreted as function application of the NP
+meaning to the VP meaning:
+</li>
+</ul>
+<pre class="example">
+S −→ NP VP 
+[S] −→ ([NP] [VP])
+</pre>
+
+<ul class="org-ul">
+<li>NPs are generalized quantifiers, or as determiner meanings applied
+to common noun meanings:
+</li>
+</ul>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="left" />
+
+<col  class="left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="left">NP &#x2013;&gt; <i>Snow White</i></td>
+<td class="left">[NP] &#x2013;&gt; \P -&gt; (P s)</td>
+</tr>
+
+<tr>
+<td class="left">NP &#x2013;&gt; <i>Alice</i></td>
+<td class="left">[NP] &#x2013;&gt; \P -&gt; (P a)</td>
+</tr>
+
+<tr>
+<td class="left">&#x2026;</td>
+<td class="left">&#x2026;</td>
+</tr>
+
+<tr>
+<td class="left">NP &#x2013;&gt; DET CN</td>
+<td class="left">[NP] &#x2013;&gt; ([DET] [CN])</td>
+</tr>
+
+<tr>
+<td class="left">NP &#x2013;&gt; DET RCN</td>
+<td class="left">[NP] &#x2013;&gt; ([DET] [RCN])</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+<b>(see book pp. 173&#x2013; for the rest)</b>
+</p>
+
+<ul class="org-ul">
+<li>example <code>[ S [ NP Alice ][ VP [ TV admired ][ NP Dorothy ]]]</code>:
+</li>
+</ul>
+<pre class="example">
+([Alice] (λu → [Dorothy] (λv → (((λx → (λy → ((Admire x) y))) v) u))))
+-&gt;&gt; ((Admire d) a).
+</pre>
+
+<dl class="org-dl">
+<dt> c7e24 </dt><dd>Give the compositional translation for <i>Snow White helped
+some dwarf</i>, and reduce it to normal form.
+</dd>
+</dl>
+<pre class="example">
+[S [NP Snow White] [VP [TV helped] [NP [DET some] [CN Dwarf]]]]
+([Snow White] ((\u -&gt; ([NP [DET some] [CN Dwarf]] ((\v -&gt; (\xy -&gt; ((Help x) y))) v))) u))
+([Snow White] ((\u -&gt; ([NP [DET some] [CN Dward]] ...
+∃x. (Dwarf x ∧ Helped s x)
+</pre>
+</div>
+</div>
+
+<div id="outline-container-sec-7" class="outline-2">
+<h2 id="sec-7"><span class="section-number-2">7</span> Implementing Semantic Interpretation</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+We will proceed by defining for every syntactic category an
+interpretation function of the appropriate type, using Entity for e
+and Bool for t. The interpretation of sentences has type Bool, so
+the interpretation function intS gets type Sent -&gt; Bool.
+</p>
+
+<p>
+<b>check book or code</b>
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-8" class="outline-2">
+<h2 id="sec-8"><span class="section-number-2">8</span> Handling Ambiguity</h2>
+<div class="outline-text-2" id="text-8">
+<p>
+If a natural language expression E is ambiguous, i.e. if E has
+several distinct meanings, then, under the assumption that these
+meanings are arrived at in a compositional way, there are three
+possible sources for the ambiguity (combinations are possible, of
+course):
+</p>
+<ul class="org-ul">
+<li>The ambiguity is lexical: E contains a word with several distinct
+meanings.  An example is <i>a splendid ball</i>.
+</li>
+<li>The ambiguity is structural: E can be assigned several distinct
+syntactic structures. Examples are <i>old [men and women]</i> versus
+<i>[old men] and women</i>, or: <i>the boy saw the [girl with the
+binoculars]</i> versus <i>the boy saw [the girl] [with the
+binoculars]</i>.
+</li>
+<li>The ambiguity is derivational: the syntactic structure that E
+exhibits can be derived in more than one way. An example is the
+sentence <i>Every prince sang some ballad</i>. It is not structurally
+ambiguous, but in order to account for the ∃ ∀ reading one might
+want to assume that one of the ways in which the structure can be
+derived is by combining <i>some ballad</i> with the incomplete
+expression <i>every prince sang __</i>.
+</li>
+</ul>
+</div>
+
+<div id="outline-container-sec-8-1" class="outline-3">
+<h3 id="sec-8-1"><span class="section-number-3">8.1</span> lexical ambiguities</h3>
+<div class="outline-text-3" id="text-8-1">
+<p>
+Lexical ambiguities can be handled in a fragment like ours by means
+of multiplying lexical entries. The two meanings of ball give rise
+to different translations:
+</p>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="left" />
+
+<col  class="left" />
+</colgroup>
+<tbody>
+<tr>
+<td class="left">CN −→ ball</td>
+<td class="left">[CN] &#x2013;&gt; (\x -&gt; (Ball<sub>1</sub> x))</td>
+</tr>
+
+<tr>
+<td class="left">CN &#x2013;&gt; ball</td>
+<td class="left">[CN] &#x2013;&gt; (\x -&gt; (Ball<sub>2</sub> x))</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+If we use these translations, then lexical ambiguity shows up in
+the fact that <i>The ball was nice</i> will receive two parses, each
+with its own translation.
+</p>
+</div>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="date">Date: 2017-11-03</p>
 <p class="author">Author: bruno cuconato</p>
-<p class="date">Created: 2017-11-06 Seg 12:05</p>
+<p class="date">Created: 2017-11-09 Qui 11:49</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.2.1 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>

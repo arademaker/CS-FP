@@ -27,10 +27,16 @@ treeAtLeast r = [(u,x) | u <- [0..], x <- [r..]]
 ----
 
 -- c7e3
-type Quant = (Integer -> Bool) -> [Integer] -> Bool
+type Quant = (Int -> Bool) -> [Int] -> Bool
 
---genTree :: Quant -> [(Integer,Integer)]
+check :: Quant -> (Int,Int) -> Bool
+check q (n,m) = q $ take m $ repeat 1--(\ x -> 0 < x && x <= m) [1..n+m]
 
+genTree :: Quant -> [(Int,Int)]
+genTree q = filter (check q) treeOfNumbers
+
+atLeast2 :: Quant
+atLeast2 p dom = length (filter p dom) >= 2
 ----
 
 allNum, noNum :: Int -> Int -> Bool
