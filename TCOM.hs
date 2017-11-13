@@ -30,7 +30,7 @@ treeAtLeast r = [(u,x) | u <- [0..], x <- [r..]]
 type Quant = (Int -> Bool) -> [Int] -> Bool
 
 check :: Quant -> (Int,Int) -> Bool
-check q (n,m) = q $ take m $ repeat 1--(\ x -> 0 < x && x <= m) [1..n+m]
+check q (n,m) = q (\ x -> 0 < x && x <= m) [1..n+m]
 
 genTree :: Quant -> [(Int,Int)]
 genTree q = filter (check q) treeOfNumbers
