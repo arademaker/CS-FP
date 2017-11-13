@@ -32,6 +32,7 @@ type Quant = (Int -> Bool) -> [Int] -> Bool
 check :: Quant -> (Int,Int) -> Bool
 check q (n,m) = q (\ x -> 0 < x && x <= m) [1..n+m]
 
+
 genTree :: Quant -> [(Int,Int)]
 genTree q = filter (check q) treeOfNumbers
 
