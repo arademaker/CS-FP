@@ -36,7 +36,11 @@ type Quant = (Integer -> Bool) -> [Integer] -> Bool
 
 --genTree :: Quant -> [(Integer,Integer)]
 
-----
+
+
+atleast2 :: Quant
+atleast2 p dom = length (filter q dom)  >= 2
+
 
 allNum, noNum :: Int -> Int -> Bool
 allNum = \ m n -> m == 0

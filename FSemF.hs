@@ -6,8 +6,9 @@ import Control.Monad
 import System.Random
 import FSynF hiding (propNames)
 
---
+
 -- Semantics of Sea Battle
+
 type Grid = [(Column,Row)]
 
 exampleGrid :: Grid
@@ -55,9 +56,11 @@ shipOK' cs rs | allAdjacent cs = allEqual rs
 shipOK :: Grid -> Bool
 shipOK = uncurry shipOK' . unzip . sort
 
+-- como fazer shipOK' ser local à shipOK ??
+
 lineupOK :: State -> Bool
 lineupOK (distrib,_) = all shipOK distrib
-----
+
 
 hit :: Attack -> State -> Bool
 hit pos (gs,_) = elem pos (concat gs)

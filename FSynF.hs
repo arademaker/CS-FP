@@ -2,7 +2,6 @@ module FSynF where
 
 import Data.List
 
---
 -- Ship battle syntax
 data Column = A' | B' | C' | D' | E' | F' | G' | H' | I' | J' deriving (Eq,Ord,Show,Enum)
 
@@ -27,7 +26,6 @@ type Feedback = [Answer]
 
 data Game = Turn | Game Turn 
 
---
 -- English fragment syntax
 data Sent = Sent NP VP deriving Show
 data NP   = SnowWhite  | Alice  | Dorothy | Goldilocks 
@@ -87,9 +85,9 @@ propNames (P   name) = [name]
 propNames (Ng  f)    = propNames f
 propNames (Cnj fs)   = (sort.nub.concat) (map propNames fs)
 propNames (Dsj fs)   = (nub.sort.concat) (map propNames fs)
-----
 
---
+
+
 -- FOL
 type Name     = String 
 type Index    = [Int]
@@ -240,7 +238,6 @@ termsInForm (Exists v f) = termsInForm f
 
 varsInForm :: Formula Term -> [Variable]
 varsInForm = varsInTerms . termsInForm
-----
 
 -- c4e23
 boundVarsInForm' :: Formula Term -> [Variable]
@@ -258,7 +255,6 @@ boundVarsInForm f = intersect (boundVarsInForm' f) (varsInForm f)
 
 freeVarsInForm :: Formula Term -> [Variable]
 freeVarsInForm f = varsInForm f \\ boundVarsInForm f
-----
 
 -- c4e24
 openForm :: Formula Term -> Bool
