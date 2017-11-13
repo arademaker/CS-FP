@@ -594,7 +594,7 @@ expression ::= constant_type
   =<->= has type T = =t -> t -> t=, and interpretation function [<->]
   = h, where h is the function in T which maps 1 to {(1,1), (0,0)} and
   0 to {(1,0), (0,1)};
-# is this exercise right?
+
   The quantifiers ∃ and ∀ are constants of type (e → t) → t, with the
   following interpretations.
   - [∀] = h, where h is the function in (e → t) → t which maps the function that
@@ -606,6 +606,7 @@ expression ::= constant_type
   types. E.g. to express second-order quantification
   (i.e. quantification over properties of things), one would need
   quantifier constants of type ((e → t) → t) → t.
+
 # exercise 7.17 - doubt?
   
   We will assume that for every type τ built from e and t we have a

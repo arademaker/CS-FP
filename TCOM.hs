@@ -105,14 +105,19 @@ intCN Dagger   = \ x -> dagger x
 
 intDET :: DET -> 
          (Entity -> Bool) -> (Entity -> Bool) -> Bool
+         
 intDET Some p q = any q (filter p entities)
+
 intDET Every p q = all q (filter p entities)
+
 intDET The p q = singleton plist && q (head plist) 
           where 
               plist = filter p entities
               singleton [x] = True 
               singleton  _  = False
+
 intDET No p q = not (intDET Some p q) 
+
 intDET Most p q = length pqlist > length (plist \\ qlist)
     where 
          plist  = filter p entities 

@@ -11,7 +11,8 @@
     - disadvantage:Haskell interpreter hides the details of how
       expressions of typed logic get simplified.
   - present chapter: composition of meaning can be carried out without
-    a logical form language as intermediate representation level.
+    a logical form language as intermediate representation
+  level. 
     - models of predicate logic can be extended to models of typed
       logic;
     - how typed logic yields appropriate meaning representations for
@@ -107,7 +108,10 @@
    - power set of a set =E= :: notation =P(E)=, is the set of all
         subsets of =E=. A two-place relation on =P(E)= is a set of
         pairs of subsets of =E=.
+<<<<<<< HEAD
 
+=======
+>>>>>>> arademaker/master
    - the relational view can be used to remedy the defects of both the
      Aristotelian and the Fregean theory. 
    - a representation language with generalized quantifier expressions
@@ -157,8 +161,13 @@
    [[./media/every-mermaid.png]]
 
 ** Conditions on Quantifier Relations
+<<<<<<< HEAD
    - we view quantifiers as two-place relations on the power set of
      some domain E, satisfying certain requirements. but which ones?
+=======
+   - we view quantifiers as two-place relations on the power set of some
+   domain E, satisfying certain requirements. but which ones?
+>>>>>>> arademaker/master
    
    - =All dwarfs work= is true in a given model if and only if the
      relation of inclusion holds between the set of dwarfs in the

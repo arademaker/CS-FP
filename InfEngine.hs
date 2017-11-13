@@ -13,7 +13,7 @@ rSection x r = [ y | (z,y) <- r, x == z ]
 r @@ s = nub [ (x,z) | (x,y) <- r, (w,z) <- s, y == w ]
 
 rtc :: Ord a => [a] -> Rel a -> Rel a
-rtc xs r = lfp (\ s -> (sort.nub) (s++(r@@s))) i
+rtc xs r = lfp (\ s -> (sort.nub) (s ++ (r @@ s))) i
            where i = [ (x,x) | x <- xs ]
 
 lfp :: Eq a => (a -> a) -> a -> a
@@ -82,8 +82,8 @@ subsetRel kb = rtc
 domain :: [(Class,Class,Bool)] -> [Class]
 domain = nub . dom where 
   dom [] = []
-  dom ((xs,ys,_):facts) = 
-             xs : opp xs : ys : opp ys : dom facts
+  dom ((x,y,_):facts) = 
+             x : opp x : y : opp y : dom facts
 
 supersets :: Class -> KB -> [Class]
 supersets cl kb = rSection cl (subsetRel kb)

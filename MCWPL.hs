@@ -34,7 +34,7 @@ lfTV :: TV -> (Term,Term) -> LF
 lfTV Loved    = \ (t1,t2) -> Atom "love"   [t1,t2]
 lfTV Admired  = \ (t1,t2) -> Atom "admire" [t1,t2]
 lfTV Helped   = \ (t1,t2) -> Atom "help"   [t1,t2]
-lfTV Defeated = \ (t1,t2) -> Atom "defeat" [t1,t2]
+glfTV Defeated = \ (t1,t2) -> Atom "defeat" [t1,t2]
 
 lfDV :: DV -> (Term,Term,Term) -> LF
 lfDV Gave = \ (t1,t2,t3) -> Atom "give" [t1,t2,t3]
@@ -48,6 +48,7 @@ lfCN Giant    = \ t -> Atom "giant"    [t]
 lfCN Wizard   = \ t -> Atom "wizard"   [t] 
 lfCN Sword    = \ t -> Atom "sword"    [t] 
 lfCN Dagger   = \ t -> Atom "dagger"   [t]
+
 
 bInLF :: LF -> [Int]
 bInLF (Atom _ _)                  = []
@@ -82,8 +83,7 @@ lfDET No    p q = Neg (Exists v (Conj [p (Var v),q (Var v)]))
 
 lfDET The p q = Exists v1 (Conj 
                  [Forall v2 (Equi (p (Var v2)) 
-                                  (Eq (Var v1) (Var v2))), 
-                  q (Var v1)])
+                              (Eq (Var v1) (Var v2))), q (Var v1)])
       where
            i  = fresh[p,q]
            v1 = Variable "x" [i]
@@ -94,17 +94,18 @@ lfRCN (RCN1 cn _ vp)    = \ t -> Conj [lfCN cn t, lfVP vp t]
 lfRCN (RCN2 cn _ np tv) = \ t -> Conj [lfCN cn t, 
                        lfNP np (\ subj -> lfTV tv (subj,t))]
 
-s1 = (Sent (NP1 Some Dwarf) 
-                   (VP1 Defeated (NP1 Some Giant)))
+
+s1 = (Sent (NP1 Some Dwarf) (VP1 Defeated (NP1 Some Giant)))
 lf1 = lfSent s1
-s2 = (Sent (NP2 The
-            (RCN2 Wizard That Dorothy Admired))
-       Laughed)
+
+s2 = (Sent (NP2 The (RCN2 Wizard That Dorothy Admired)) Laughed)
 lf2 = lfSent s2
-s3 = (Sent (NP2 The (RCN1 Princess 
-                                  That (VP1 Helped Alice))) 
-                    Shuddered)
+
+s3 = (Sent (NP2 The (RCN1 Princess That (VP1 Helped Alice))) Shuddered)
 lf3 = lfSent s3
+
+
+-- Semantics
 
 type Interp a = String -> [a] -> Bool
 
