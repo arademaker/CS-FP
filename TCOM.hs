@@ -5,15 +5,10 @@ import FSynF
 import Model
 
 -- c7e1
-treeOfNumbers' :: Int -> [(Int,Int)]
-treeOfNumbers' n = [(n-x,x) | x <- [0..n]] ++ treeOfNumbers' (n+1) 
-
-treeOfNumbers :: [(Int,Int)]
 --  (|A − B|, |A ∩ B|)
-treeOfNumbers = treeOfNumbers' 0
-----
+treeOfNumbers :: [(Int,Int)]
+treeOfNumbers = concat numberTree
 
---
 numberTree :: [[(Int,Int)]]
 numberTree = [[(n-x,x) | x <- [0..n]] | n <- [0..]]
 
@@ -32,15 +27,17 @@ treeAtLeast r = [(u,x) | u <- [0..], x <- [r..]]
 ----
 
 -- c7e3
-type Quant = (Integer -> Bool) -> [Integer] -> Bool
+type Quant = (Int -> Bool) -> [Int] -> Bool
 
---genTree :: Quant -> [(Integer,Integer)]
+check :: Quant -> (Int,Int) -> Bool
+check q (n,m) = q $ take m $ repeat 1--(\ x -> 0 < x && x <= m) [1..n+m]
 
+genTree :: Quant -> [(Int,Int)]
+genTree q = filter (check q) treeOfNumbers
 
-
-atleast2 :: Quant
-atleast2 p dom = length (filter q dom)  >= 2
-
+atLeast2 :: Quant
+atLeast2 p dom = length (filter p dom) >= 2
+----
 
 allNum, noNum :: Int -> Int -> Bool
 allNum = \ m n -> m == 0
@@ -72,7 +69,9 @@ intNP Goldilocks    = \ p -> p goldilocks
 intNP LittleMook    = \ p -> p littleMook
 intNP Atreyu        = \ p -> p atreyu
 intNP (NP1 det cn)  = (intDET det) (intCN cn) 
-intNP (NP2 det rcn) = (intDET det) (intRCN rcn) 
+intNP (NP2 det rcn) = (intDET det) (intRCN rcn)
+intNP (NP3 mod n cn)  = (intMOD mod n) (intCN cn) 
+intNP (NP4 mod n rcn) = (intMOD mod n) (intRCN rcn)
 
 intVP :: VP -> Entity -> Bool 
 intVP Laughed   = \ x -> laugh x
@@ -106,7 +105,7 @@ intCN Dagger   = \ x -> dagger x
 
 intDET :: DET -> 
          (Entity -> Bool) -> (Entity -> Bool) -> Bool
-
+         
 intDET Some p q = any q (filter p entities)
 
 intDET Every p q = all q (filter p entities)
@@ -124,6 +123,18 @@ intDET Most p q = length pqlist > length (plist \\ qlist)
          plist  = filter p entities 
          qlist  = filter q entities 
          pqlist = filter q plist
+
+-- c7e25
+intMOD :: MOD -> Int -> (Entity -> Bool) -> (Entity -> Bool) -> Bool
+intMOD AtLeast n p q = length pqlist >= n
+  where
+    plist = filter p entities
+    pqlist = filter q plist
+intMOD AtMost n p q = length pqlist <= n
+  where
+    plist = filter p entities
+    pqlist = filter q plist
+--
 
 intRCN :: RCN -> Entity -> Bool
 intRCN (RCN1 cn _ vp) = 
