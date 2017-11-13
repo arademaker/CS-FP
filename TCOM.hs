@@ -35,8 +35,8 @@ check q (n,m) = q (\ x -> 0 < x && x <= m) [1..n+m]
 genTree :: Quant -> [(Int,Int)]
 genTree q = filter (check q) treeOfNumbers
 
-atLeast2 :: Quant
-atLeast2 p dom = length (filter p dom) >= 2
+atLeast :: Int -> Quant
+atLeast n p dom = length (filter p dom) >= n
 ----
 
 allNum, noNum :: Int -> Int -> Bool
