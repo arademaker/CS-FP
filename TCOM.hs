@@ -71,8 +71,6 @@ intNP LittleMook    = \ p -> p littleMook
 intNP Atreyu        = \ p -> p atreyu
 intNP (NP1 det cn)  = (intDET det) (intCN cn) 
 intNP (NP2 det rcn) = (intDET det) (intRCN rcn)
-intNP (NP3 mod n cn)  = (intMOD mod n) (intCN cn) 
-intNP (NP4 mod n rcn) = (intMOD mod n) (intRCN rcn)
 
 intVP :: VP -> Entity -> Bool 
 intVP Laughed   = \ x -> laugh x
@@ -126,12 +124,12 @@ intDET Most p q = length pqlist > length (plist \\ qlist)
          pqlist = filter q plist
 
 -- c7e25
-intMOD :: MOD -> Int -> (Entity -> Bool) -> (Entity -> Bool) -> Bool
-intMOD AtLeast n p q = length pqlist >= n
+intDET (AtLeast n) p q = length pqlist >= n
   where
     plist = filter p entities
     pqlist = filter q plist
-intMOD AtMost n p q = length pqlist <= n
+
+intDET (AtMost n) p q = length pqlist <= n
   where
     plist = filter p entities
     pqlist = filter q plist
@@ -145,3 +143,5 @@ intRCN (RCN2 cn _ np tv) =
    \ e -> ((intCN cn e) && 
            (intNP np (\ subj -> (intTV tv subj e))))
 
+-- examples
+-- intSent (Sent (NP2 (AtMost 3) (RCN1 Boy That (VP1 Admired Goldilocks))) Shuddered)
