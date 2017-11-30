@@ -1,5 +1,6 @@
 module P where
 
+import Prelude hiding ((<*>))
 import Data.List
 import Data.Char
 import FPH
@@ -152,6 +153,7 @@ parse = \ xs ->
 
 
 -- section 9.3
+
 type Parser a b = [a] -> [(b,[a])]
 
 succeed :: b -> Parser a b 
@@ -160,15 +162,15 @@ succeed r xs = [(r,xs)]
 failp :: Parser a b
 failp xs = []
 
-symbol :: Eq a => a -> Parser a a 
-symbol c []                 = []
-symbol c (x:xs) | c == x    = [(x,xs)]
-                | otherwise = [] 
+-- symbol :: Eq a => a -> Parser a a 
+-- symbol c []                 = []
+-- symbol c (x:xs) | c == x    = [(x,xs)]
+--                 | otherwise = [] 
 
 token :: Eq a => [a] -> Parser a [a]
 token cs xs | cs == take n xs   = [(cs,drop n xs)]
             | otherwise         = []
-         where n = length cs
+  where n = length cs
 
 satisfy :: (a -> Bool) -> Parser a a 
 satisfy p []                 = []
@@ -178,22 +180,36 @@ satisfy p (x:xs) | p x       = [(x,xs)]
 digit :: Parser Char Char 
 digit = satisfy isDigit
 
+-- Ex 9.8 
+symbol :: Eq a => a -> Parser a a 
+symbol c = satisfy (\x -> x == c)
+
 just :: Parser a b -> Parser a b 
 just p = filter (null.snd) . p
+
+{-
+λ> just (symbol "alice") ["alice","is","good"]
+[]
+λ> just (symbol "alice") ["alice"]
+[("alice",[])]
+λ> just (token "alice") "alice is good"
+[]
+λ> just (token "alice") "alice"
+[("alice","")]
+-}
 
 infixr 4 <|>
  
 (<|>) :: Parser a b -> Parser a b -> Parser a b 
 (p1 <|> p2) xs = p1 xs ++ p2 xs 
 
-(<**>) :: Parser a [b] -> Parser a [b] -> Parser a [b]
-(p <**> q) xs = [ (r1 ++ r2,zs) | (r1,ys) <- p xs, 
-                                 (r2,zs) <- q ys ]
+(<*>) :: Parser a [b] -> Parser a [b] -> Parser a [b]
+(p <*> q) xs = [ (r1 ++ r2,zs) | (r1,ys) <- p xs, (r2,zs) <- q ys ]
 
 pS,pNP,pVP,pD,pN :: Parser String String
 
-pS  = pNP <**> pVP
-pNP = symbol "Alice"  <|> symbol "Dorothy" <|> (pD <**> pN)
+pS  = pNP <*> pVP
+pNP = symbol "Alice"  <|> symbol "Dorothy" <|> (pD <*> pN)
 pVP = symbol "smiled" <|> symbol "laughed"
 pD  = symbol "every"  <|> symbol "some"    <|> symbol "no"
 pN  = symbol "dwarf"  <|> symbol "wizard"
